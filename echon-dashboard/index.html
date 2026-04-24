@@ -46,8 +46,8 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-bottom: 20px; /* Valor negativo faz o texto de baixo subir */
-    margin-top: 10px;    /* Valor negativo faz a imagem subir no card */
+    margin-bottom: 20px;
+    margin-top: 10px;
     display: flex;
     justify-content: center;
   }
@@ -119,6 +119,17 @@
     display: none;
   }
 
+  .sucesso {
+    background: rgba(34,197,94,.1);
+    border: 1px solid rgba(34,197,94,.3);
+    color: #4ade80;
+    border-radius: 8px;
+    padding: .75rem 1rem;
+    font-size: .85rem;
+    margin-bottom: 1rem;
+    display: none;
+  }
+
   .footer-txt {
     text-align: center;
     margin-top: 1.5rem;
@@ -126,59 +137,122 @@
     font-size: .78rem;
   }
 
-
   .logo-img {
-  max-width: 130px; /* Ajuste a largura conforme necessário */
-  height: auto;
-  display: block;
-  margin: 0 auto; /* Centraliza a imagem no card */
-}
+    max-width: 130px;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+  }
+
   .loading { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin .6s linear infinite; vertical-align: middle; margin-right: 6px; }
   @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── ADMIN PANEL ── */
+  .admin-section-title {
+    font-size: .72rem;
+    color: rgba(255,255,255,.35);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    margin-bottom: .75rem;
+    margin-top: 1.25rem;
+    padding-bottom: .4rem;
+    border-bottom: 1px solid rgba(255,255,255,.06);
+  }
+  .admin-section-title:first-child { margin-top: 0; }
+  .token-gerado {
+    background: rgba(0,199,190,.08);
+    border: 1px solid rgba(0,199,190,.2);
+    border-radius: 8px;
+    padding: .6rem .9rem;
+    font-size: .78rem;
+    color: #00C7BE;
+    margin-bottom: 1rem;
+    display: none;
+    word-break: break-all;
+  }
+  .token-gerado span { font-weight: 600; }
+  .admin-link {
+    color: rgba(255,255,255,.08);
+    font-size: .7rem;
+    cursor: pointer;
+    text-decoration: none;
+    transition: color .3s;
+    user-select: none;
+  }
+  .admin-link:hover { color: rgba(255,255,255,.25); }
 </style>
 </head>
 <body>
 <div class="card">
   <div class="logo" style="justify-content: center;">
-  <img src="Logo_W.png" class="logo-img">
-</div>
-  <p class="subtitle">Olá, bem vindo de volta! Digite as credenciais e acesse o painel de informações da sua empresa.</p>
+    <img src="Logo_W.png" class="logo-img">
+  </div>
 
-  <div class="erro" id="erroMsg"></div>
+  <!-- LOGIN -->
+  <div id="tab-login">
+    <p class="subtitle">Olá, bem vindo de volta! Digite as credenciais e acesse o painel de informações da sua empresa.</p>
+    <div class="erro" id="erroMsg"></div>
+    <label>E-mail</label>
+    <input type="email" id="email" placeholder="seu@email.com" />
+    <label>Senha</label>
+    <input type="password" id="senha" placeholder="••••••••" />
+    <button class="btn-login" id="btnLogin" onclick="login()">Entrar</button>
+  </div>
 
-  <label>E-mail</label>
-  <input type="email" id="email" placeholder="seu@email.com" />
+  <!-- ADMIN (oculto) -->
+  <div id="tab-admin" style="display:none">
+    <div id="admin-lock">
+      <p class="subtitle">Área restrita.</p>
+      <div class="erro" id="erroAdmin"></div>
+      <label>Senha de administrador</label>
+      <input type="password" id="senhaAdmin" placeholder="••••••••" />
+      <button class="btn-login" onclick="desbloquearAdmin()">Continuar</button>
+    </div>
+    <div id="admin-panel" style="display:none">
+      <div class="sucesso" id="sucessoAdmin"></div>
+      <div class="erro" id="erroAdminForm"></div>
+      <div class="admin-section-title">Novo Cliente</div>
+      <label>Nome da empresa</label>
+      <input type="text" id="adm-nome" placeholder="Ex: Cinemark" />
+      <label>E-mail de acesso</label>
+      <input type="email" id="adm-email" placeholder="cliente@empresa.com" />
+      <label>Senha de acesso</label>
+      <input type="password" id="adm-senha" placeholder="Senha do cliente" />
+      <div class="admin-section-title">Dispositivo / Sensor</div>
+      <label>Nome do sensor</label>
+      <input type="text" id="adm-disp-nome" placeholder="Ex: Sensor Sala 1" />
+      <label>Local de instalação</label>
+      <input type="text" id="adm-disp-local" placeholder="Ex: Corredor principal" />
+      <div class="token-gerado" id="tokenGerado">Token do sensor: <span id="tokenValor"></span></div>
+      <button class="btn-login" id="btnCadastrar" onclick="cadastrarCliente()">Cadastrar cliente e sensor</button>
+      <button style="width:100%;background:transparent;border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.4);border-radius:10px;padding:.6rem;font-family:'DM Sans',sans-serif;font-size:.82rem;cursor:pointer;margin-top:.75rem;transition:background .2s" onclick="sairAdmin()">Sair do modo admin</button>
+    </div>
+  </div>
 
-  <label>Senha</label>
-  <input type="password" id="senha" placeholder="••••••••" />
-
-  <button class="btn-login" id="btnLogin" onclick="login()">Entrar</button>
-
-  <p class="footer-txt">© 2026 ECHON - Sonara
+  <p class="footer-txt">© 2026 ECHON - Sonara &nbsp;·&nbsp; <span class="admin-link" onclick="toggleAdmin()">v1.0</span></p>
 </div>
 
 <script>
-  // TROQUE PELA URL DA SUA API NO RENDER
   const API = 'http://localhost:3000';
+  const ADMIN_EMAIL = 'adm@echon.app';
+  const ADMIN_SENHA = 'YxTLA8jJxwpv3Ux';
 
-  // Se já tem token salvo, vai direto pro dashboard
+  // ── TOGGLE ADMIN ──
+  let adminVisivel = false;
+  function toggleAdmin() {
+    adminVisivel = !adminVisivel;
+    document.getElementById('tab-login').style.display = adminVisivel ? 'none' : 'block';
+    document.getElementById('tab-admin').style.display = adminVisivel ? 'block' : 'none';
+  }
 
-
-
-
-
-
-
+  // ── LOGIN CLIENTE ──
   async function login() {
     const email = document.getElementById('email').value.trim();
     const senha = document.getElementById('senha').value.trim();
     const btn = document.getElementById('btnLogin');
     const erro = document.getElementById('erroMsg');
 
-    if (!email || !senha) {
-      mostrarErro('Preencha e-mail e senha.');
-      return;
-    }
+    if (!email || !senha) { mostrarErro('erroMsg', 'Preencha e-mail e senha.'); return; }
 
     btn.disabled = true;
     btn.innerHTML = '<span class="loading"></span>Entrando...';
@@ -195,7 +269,7 @@
       console.log('Resposta da API:', data);
 
       if (!res.ok) {
-        mostrarErro(data.erro || 'Erro ao fazer login.');
+        mostrarErro('erroMsg', data.erro || 'Erro ao fazer login.');
         btn.disabled = false;
         btn.innerHTML = 'Entrar';
         return;
@@ -206,19 +280,96 @@
       window.location.replace('dashboard.html');
 
     } catch (e) {
-      mostrarErro('Não foi possível conectar ao servidor.');
+      mostrarErro('erroMsg', 'Não foi possível conectar ao servidor.');
       btn.disabled = false;
       btn.innerHTML = 'Entrar';
     }
   }
 
-  function mostrarErro(msg) {
-    const el = document.getElementById('erroMsg');
+  // ── ADMIN: DESBLOQUEAR ──
+  function desbloquearAdmin() {
+    const senha = document.getElementById('senhaAdmin').value.trim();
+    if (senha !== ADMIN_SENHA) {
+      mostrarErro('erroAdmin', 'Senha incorreta.');
+      return;
+    }
+    document.getElementById('admin-lock').style.display = 'none';
+    document.getElementById('admin-panel').style.display = 'block';
+  }
+
+  function sairAdmin() {
+    document.getElementById('admin-lock').style.display = 'block';
+    document.getElementById('admin-panel').style.display = 'none';
+    document.getElementById('senhaAdmin').value = '';
+  }
+
+  // ── ADMIN: CADASTRAR CLIENTE + DISPOSITIVO ──
+  async function cadastrarCliente() {
+    const nome = document.getElementById('adm-nome').value.trim();
+    const email = document.getElementById('adm-email').value.trim();
+    const senha = document.getElementById('adm-senha').value.trim();
+    const dispNome = document.getElementById('adm-disp-nome').value.trim();
+    const dispLocal = document.getElementById('adm-disp-local').value.trim();
+    const btn = document.getElementById('btnCadastrar');
+
+    if (!nome || !email || !senha || !dispNome || !dispLocal) {
+      mostrarErro('erroAdminForm', 'Preencha todos os campos.');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading"></span>Cadastrando...';
+    document.getElementById('erroAdminForm').style.display = 'none';
+    document.getElementById('sucessoAdmin').style.display = 'none';
+    document.getElementById('tokenGerado').style.display = 'none';
+
+    try {
+      const res = await fetch(`${API}/api/admin/cadastrar`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nome, email, senha, dispNome, dispLocal, adminSenha: ADMIN_SENHA })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        mostrarErro('erroAdminForm', data.erro || 'Erro ao cadastrar.');
+        btn.disabled = false;
+        btn.innerHTML = 'Cadastrar cliente e sensor';
+        return;
+      }
+
+      // Mostra token gerado
+      document.getElementById('tokenValor').textContent = data.token;
+      document.getElementById('tokenGerado').style.display = 'block';
+
+      // Mostra sucesso
+      const s = document.getElementById('sucessoAdmin');
+      s.textContent = `✓ Cliente "${nome}" cadastrado com sucesso!`;
+      s.style.display = 'block';
+
+      // Limpa campos
+      ['adm-nome','adm-email','adm-senha','adm-disp-nome','adm-disp-local'].forEach(id => {
+        document.getElementById(id).value = '';
+      });
+
+      btn.disabled = false;
+      btn.innerHTML = 'Cadastrar cliente e sensor';
+
+    } catch (e) {
+      mostrarErro('erroAdminForm', 'Não foi possível conectar ao servidor.');
+      btn.disabled = false;
+      btn.innerHTML = 'Cadastrar cliente e sensor';
+    }
+  }
+
+  // ── HELPERS ──
+  function mostrarErro(id, msg) {
+    const el = document.getElementById(id);
     el.textContent = msg;
     el.style.display = 'block';
   }
 
-  // Enter para logar
   document.addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
 </script>
 </body>

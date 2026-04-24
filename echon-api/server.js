@@ -19,6 +19,7 @@ const db = mysql.createPool({
 });
 
 const SECRET = process.env.JWT_SECRET || 'echon-secret-2025';
+const ADMIN_SENHA = 'YxTLA8jJxwpv3Ux';
 
 function auth(req, res, next) {
   const token = req.headers.authorization?.split(' ')[1];
@@ -29,6 +30,15 @@ function auth(req, res, next) {
   } catch {
     res.status(401).json({ erro: 'Token inválido' });
   }
+}
+
+function gerarToken() {
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  let token = 'echon-';
+  for (let i = 0; i < 12; i++) {
+    token += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return token;
 }
 
 // LOGIN
@@ -53,6 +63,63 @@ app.post('/api/login', async (req, res) => {
     });
   } catch (e) {
     res.status(500).json({ erro: 'Erro no servidor' });
+  }
+});
+
+// ADMIN: CADASTRAR CLIENTE + DISPOSITIVO
+app.post('/api/admin/cadastrar', async (req, res) => {
+  try {
+    const { nome, email, senha, dispNome, dispLocal, adminSenha } = req.body;
+
+    // Valida senha admin
+    if (adminSenha !== ADMIN_SENHA) {
+      return res.status(401).json({ erro: 'Senha de administrador incorreta' });
+    }
+
+    // Valida campos
+    if (!nome || !email || !senha || !dispNome || !dispLocal) {
+      return res.status(400).json({ erro: 'Preencha todos os campos' });
+    }
+
+    // Verifica se email já existe
+    const [existe] = await db.query(
+      'SELECT id FROM clientes WHERE email = ?',
+      [email]
+    );
+    if (existe.length > 0) {
+      return res.status(400).json({ erro: 'Este e-mail já está cadastrado' });
+    }
+
+    // Insere cliente
+    const [resultado] = await db.query(
+      'INSERT INTO clientes (nome, email, senha) VALUES (?, ?, ?)',
+      [nome, email, senha]
+    );
+    const clienteId = resultado.insertId;
+
+    // Gera token único para o dispositivo
+    let token;
+    let tokenExiste = true;
+    while (tokenExiste) {
+      token = gerarToken();
+      const [check] = await db.query(
+        'SELECT id FROM dispositivos WHERE token = ?',
+        [token]
+      );
+      tokenExiste = check.length > 0;
+    }
+
+    // Insere dispositivo vinculado ao cliente
+    await db.query(
+      'INSERT INTO dispositivos (cliente_id, nome, local, token) VALUES (?, ?, ?, ?)',
+      [clienteId, dispNome, dispLocal, token]
+    );
+
+    res.json({ sucesso: true, token, clienteId });
+
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ erro: 'Erro ao cadastrar cliente' });
   }
 });
 

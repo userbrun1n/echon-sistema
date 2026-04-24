@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ECHON – Acesso</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: #0A1628;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+  body::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse 70% 60% at 50% 100%, rgba(30,111,217,.2) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .card {
+    background: #112240;
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 20px;
+    padding: 1.5rem 2.5rem 2.5rem 2.5rem;
+    width: 100%;
+    max-width: 420px;
+    position: relative;
+    z-index: 1;
+    box-shadow: 0 32px 80px rgba(0,0,0,.4);
+  }
+
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-size: 2rem;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -1px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 20px; /* Valor negativo faz o texto de baixo subir */
+    margin-top: 10px;    /* Valor negativo faz a imagem subir no card */
+    display: flex;
+    justify-content: center;
+  }
+  .logo span { color: #1E6FD9; }
+  .logo-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #00C7BE;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.4} }
+
+  .subtitle {
+    color: rgba(255,255,255,.4);
+    font-size: .88rem;
+    margin-bottom: 2rem;
+  }
+
+  label {
+    display: block;
+    font-size: .8rem;
+    color: rgba(255,255,255,.5);
+    margin-bottom: .4rem;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+  }
+
+  input {
+    width: 100%;
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 10px;
+    padding: .75rem 1rem;
+    color: #fff;
+    font-family: 'DM Sans', sans-serif;
+    font-size: .95rem;
+    margin-bottom: 1.25rem;
+    transition: border-color .2s;
+    outline: none;
+  }
+  input:focus { border-color: #1E6FD9; }
+  input::placeholder { color: rgba(255,255,255,.2); }
+
+  .btn-login {
+    width: 100%;
+    background: #1E6FD9;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: .85rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background .2s, transform .15s;
+    margin-top: .25rem;
+  }
+  .btn-login:hover { background: #1a5fc5; transform: translateY(-1px); }
+  .btn-login:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+
+  .erro {
+    background: rgba(239,68,68,.1);
+    border: 1px solid rgba(239,68,68,.3);
+    color: #f87171;
+    border-radius: 8px;
+    padding: .75rem 1rem;
+    font-size: .85rem;
+    margin-bottom: 1rem;
+    display: none;
+  }
+
+  .footer-txt {
+    text-align: center;
+    margin-top: 1.5rem;
+    color: rgba(255,255,255,.2);
+    font-size: .78rem;
+  }
+
+
+  .logo-img {
+  max-width: 130px; /* Ajuste a largura conforme necessário */
+  height: auto;
+  display: block;
+  margin: 0 auto; /* Centraliza a imagem no card */
+}
+  .loading { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin .6s linear infinite; vertical-align: middle; margin-right: 6px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo" style="justify-content: center;">
+  <img src="Logo_W.png" class="logo-img">
+</div>
+  <p class="subtitle">Olá, bem vindo de volta! Digite as credenciais e acesse o painel de informações da sua empresa.</p>
+
+  <div class="erro" id="erroMsg"></div>
+
+  <label>E-mail</label>
+  <input type="email" id="email" placeholder="seu@email.com" />
+
+  <label>Senha</label>
+  <input type="password" id="senha" placeholder="••••••••" />
+
+  <button class="btn-login" id="btnLogin" onclick="login()">Entrar</button>
+
+  <p class="footer-txt">© 2026 ECHON - Sonara
+</div>
+
+<script>
+  // TROQUE PELA URL DA SUA API NO RENDER
+  const API = 'http://localhost:3000';
+
+  // Se já tem token salvo, vai direto pro dashboard
+
+
+
+
+
+
+
+  async function login() {
+    const email = document.getElementById('email').value.trim();
+    const senha = document.getElementById('senha').value.trim();
+    const btn = document.getElementById('btnLogin');
+    const erro = document.getElementById('erroMsg');
+
+    if (!email || !senha) {
+      mostrarErro('Preencha e-mail e senha.');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading"></span>Entrando...';
+    erro.style.display = 'none';
+
+    try {
+      const res = await fetch(`${API}/api/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, senha })
+      });
+
+      const data = await res.json();
+      console.log('Resposta da API:', data);
+
+      if (!res.ok) {
+        mostrarErro(data.erro || 'Erro ao fazer login.');
+        btn.disabled = false;
+        btn.innerHTML = 'Entrar';
+        return;
+      }
+
+      localStorage.setItem('echon_token', data.token);
+      localStorage.setItem('echon_cliente', JSON.stringify(data.cliente));
+      window.location.replace('dashboard.html');
+
+    } catch (e) {
+      mostrarErro('Não foi possível conectar ao servidor.');
+      btn.disabled = false;
+      btn.innerHTML = 'Entrar';
+    }
+  }
+
+  function mostrarErro(msg) {
+    const el = document.getElementById('erroMsg');
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+
+  // Enter para logar
+  document.addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
+</script>
+</body>
+</html>

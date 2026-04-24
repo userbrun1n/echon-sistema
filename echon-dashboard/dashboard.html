@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ECHON – Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Raleway:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #0A1628;
+    --navy-mid: #112240;
+    --navy-light: #1B3461;
+    --blue: #1E6FD9;
+    --cyan: #00C7BE;
+    --green: #22C55E;
+    --yellow: #F59E0B;
+    --red: #EF4444;
+    --font-head: 'Raleway', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+    --sidebar-w: 60px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font-body); background: #080F1C; color: #fff; min-height: 100vh; display: flex; opacity: 0; transition: opacity .4s; }
+  body.loaded { opacity: 1; }
+
+  .sidebar { width: var(--sidebar-w); background: var(--navy-mid); border-right: 1px solid rgba(255,255,255,.06); display: flex; flex-direction: column; align-items: center; padding: 1.25rem 0; gap: .75rem; position: fixed; top: 0; left: 0; bottom: 0; z-index: 50; }
+  .sb-logo { width: 100%; /* Ocupa a largura da sidebar */
+  display: flex; 
+  justify-content: center; 
+  align-items: center; 
+  margin-bottom: .0rem; 
+  padding: 0 5px; }
+  .sidebar-img {
+  max-width: 50px; /* Largura ideal para caber na sidebar de 60px */
+  height: auto;    /* Mantém a proporção sem achatar */
+  object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); /* Opcional: dá um leve destaque */
+}
+  .sb-divider { width: 30px; height: 1px; background: rgba(255,255,255,.08); margin: 0rem 0; }
+  .sb-icon { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background .2s; }
+  .sb-icon:hover { background: rgba(255,255,255,.08); }
+  .sb-icon.active { background: var(--blue); }
+  .sb-icon svg { width: 18px; height: 18px; stroke: rgba(255,255,255,.45); }
+  .sb-icon.active svg { stroke: #fff; }
+  .sb-logout { margin-top: auto; width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background .2s; }
+  .sb-logout:hover { background: rgba(239,68,68,.15); }
+  .sb-logout svg { width: 18px; height: 18px; stroke: rgba(255,255,255,.3); }
+  .sb-logout:hover svg { stroke: #f87171; }
+
+  .main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+
+  .topbar { background: var(--navy-mid); border-bottom: 1px solid rgba(255,255,255,.06); padding: 0 1.5rem; height: 60px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 40; }
+  .topbar-left { display: flex; align-items: center; gap: 1rem; }
+  .topbar-title { font-family: var(--font-head); font-size: 1rem; font-weight: 700; color: rgba(255,255,255,.9); }
+  .topbar-sub { font-size: .78rem; color: rgba(255,255,255,.35); }
+  .live-badge { display: flex; align-items: center; gap: 6px; background: rgba(34,197,94,.1); border: 1px solid rgba(34,197,94,.2); color: var(--green); padding: .25rem .75rem; border-radius: 100px; font-size: .75rem; font-weight: 500; }
+  .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 1.5s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+  .topbar-right { display: flex; align-items: center; gap: 1rem; }
+  .client-chip { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08); border-radius: 100px; padding: .3rem .9rem .3rem .4rem; }
+  .client-avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--blue); display: flex; align-items: center; justify-content: center; font-family: var(--font-head); font-size: .7rem; font-weight: 700; color: #fff; }
+  .client-name { font-size: .82rem; color: rgba(255,255,255,.7); font-weight: 500; }
+
+  .content { padding: 1.5rem; flex: 1; }
+
+  .greeting { margin-bottom: 1.5rem; animation: fadeUp .5s ease both; }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+  .greeting h1 {
+  /* Muda para a fonte da logo */
+  font-family: var(--font-head); 
+  /* Aumenta o peso para ficar "parruda" como a logo */
+  font-weight: 800; 
+  /* Ajusta o espaçamento entre letras para o estilo tecnológico */
+  letter-spacing: -0.02em; 
+  font-size: 1.8rem;
+  color: #fff;
+  margin-bottom: .2rem;
+  text-transform: none; /* Mantém maiúsculas/minúsculas originais */
+}
+  .greeting h1 span {
+  color: var(--cyan); /* Usa o verde/ciano da Echon */
+  font-weight: 800;
+}
+  .greeting p { font-size: .85rem; color: rgba(255,255,255,.4); }
+
+  .device-bar { display: flex; align-items: center; gap: .75rem; margin-bottom: 1.5rem; flex-wrap: wrap; animation: fadeUp .5s .1s ease both; }
+  .device-label { font-size: .78rem; color: rgba(255,255,255,.4); }
+  .device-btn { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1); color: rgba(255,255,255,.6); border-radius: 8px; padding: .4rem .9rem; font-family: var(--font-body); font-size: .82rem; cursor: pointer; transition: all .2s; }
+  .device-btn:hover { border-color: var(--blue); color: #fff; }
+  .device-btn.active { background: var(--blue); border-color: var(--blue); color: #fff; }
+
+  .metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.25rem; animation: fadeUp .5s .15s ease both; }
+  .metric-card { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.07); border-radius: 14px; padding: 1.1rem; position: relative; overflow: hidden; transition: border-color .2s; }
+  .metric-card:hover { border-color: rgba(255,255,255,.14); }
+  .metric-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; border-radius: 2px 2px 0 0; }
+  .mc-blue::before { background: var(--blue); }
+  .mc-green::before { background: var(--green); }
+  .mc-yellow::before { background: var(--yellow); }
+  .mc-red::before { background: var(--red); }
+  .metric-label { font-size: .7rem; color: rgba(255,255,255,.4); text-transform: uppercase; letter-spacing: .07em; margin-bottom: .4rem; }
+  .metric-val { font-family: var(--font-head); font-size: 2rem; font-weight: 700; color: #fff; line-height: 1; }
+  .metric-unit { font-size: .78rem; color: rgba(255,255,255,.35); margin-top: .15rem; }
+  .metric-badge { display: inline-flex; align-items: center; gap: 4px; border-radius: 6px; padding: 3px 9px; font-size: .7rem; font-weight: 600; margin-top: .5rem; }
+  .badge-low { background: rgba(34,197,94,.12); color: #4ade80; }
+  .badge-moderate { background: rgba(245,158,11,.12); color: #fbbf24; }
+  .badge-high { background: rgba(239,68,68,.12); color: #f87171; }
+  .badge-info { background: rgba(30,111,217,.12); color: #60a5fa; }
+
+  .charts-row { display: grid; grid-template-columns: 2fr 1fr; gap: 1rem; margin-bottom: 1.25rem; animation: fadeUp .5s .2s ease both; }
+  .panel { background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.06); border-radius: 14px; padding: 1.1rem; }
+  /* Títulos dos Painéis (Gráficos e Alertas) */
+.panel-title {
+    font-family: var(--font-head) !important;
+    font-weight: 700 !important; /* Peso Bold */
+    text-transform: uppercase;   /* Fica muito profissional em Raleway */
+    letter-spacing: 0.05em;
+    font-size: 0.85rem !important;
+}
+
+  .alerts-list { display: flex; flex-direction: column; gap: .55rem; }
+  .alert-item { display: flex; align-items: flex-start; gap: .65rem; border-radius: 8px; padding: .6rem .75rem; border-left: 3px solid transparent; background: rgba(255,255,255,.02); }
+  .alert-item.a-red { border-left-color: var(--red); }
+  .alert-item.a-yellow { border-left-color: var(--yellow); }
+  .alert-item.a-green { border-left-color: var(--green); }
+  .alert-text { font-size: .77rem; color: rgba(255,255,255,.65); line-height: 1.4; }
+  .alert-meta { font-size: .68rem; color: rgba(255,255,255,.3); margin-top: 2px; }
+  .alert-icon { font-size: .85rem; margin-top: 1px; flex-shrink: 0; }
+
+  .tips-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 1rem; animation: fadeUp .5s .25s ease both; }
+  .tip-card { background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.06); border-radius: 14px; padding: 1.1rem; transition: border-color .2s, transform .2s; }
+  .tip-card:hover { border-color: rgba(255,255,255,.12); transform: translateY(-2px); }
+  .tip-icon { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-bottom: .75rem; font-size: 1.1rem; }
+  .tip-icon.t-green { background: rgba(34,197,94,.1); }
+  .tip-icon.t-blue { background: rgba(30,111,217,.1); }
+  .tip-icon.t-yellow { background: rgba(245,158,11,.1); }
+  .tip-title { font-family: var(--font-head); font-size: .88rem; font-weight: 700; color: rgba(255,255,255,.9); margin-bottom: .3rem; }
+  .tip-text { font-size: .8rem; color: rgba(255,255,255,.4); line-height: 1.55; }
+
+  .loading-overlay { position: fixed; inset: 0; z-index: 200; background: #080F1C; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 1rem; transition: opacity .4s; }
+  .loading-overlay.hide { opacity: 0; pointer-events: none; }
+  .loading-logo { font-family: var(--font-head); font-size: 2rem; font-weight: 800; color: #fff; letter-spacing: -1px; }
+  .loading-logo span { color: var(--cyan); }
+  .loading-bar { width: 120px; height: 2px; background: rgba(255,255,255,.1); border-radius: 2px; overflow: hidden; }
+  .loading-bar-fill { height: 100%; background: var(--cyan); border-radius: 2px; animation: load 1.2s ease forwards; }
+  @keyframes load { from{width:0} to{width:100%} }
+
+  .no-data { text-align: center; padding: 2rem; color: rgba(255,255,255,.3); font-size: .85rem; }
+
+  @media (max-width: 900px) {
+    .metrics-grid { grid-template-columns: 1fr 1fr; }
+    .charts-row { grid-template-columns: 1fr; }
+    .tips-row { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 600px) {
+    .metrics-grid { grid-template-columns: 1fr 1fr; }
+    .topbar-sub, .live-badge { display: none; }
+  }
+  .page{display:none}
+  .page.active{display:block}
+  .sb-icon{position:relative}
+  .sb-tooltip{position:absolute;left:52px;background:#1B3461;color:#fff;font-size:.75rem;padding:4px 10px;border-radius:6px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .15s;z-index:100}
+  .sb-icon:hover .sb-tooltip{opacity:1}
+  .hist-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem}
+  .hist-header h2{font-family:var(--font-head);font-size:1.2rem;font-weight:800}
+  .hist-header p{font-size:.82rem;color:rgba(255,255,255,.4);margin-top:.2rem}
+  .hist-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1.25rem}
+  .hist-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:1.1rem;cursor:pointer;transition:border-color .2s,transform .2s,background .2s}
+  .hist-card:hover{border-color:rgba(30,111,217,.4);transform:translateY(-3px);background:rgba(255,255,255,.06)}
+  .hist-card-title{font-family:var(--font-head);font-size:.95rem;font-weight:700;margin-bottom:.25rem}
+  .hist-card-sub{font-size:.75rem;color:rgba(255,255,255,.35);margin-bottom:.85rem;display:flex;align-items:center;gap:.5rem}
+  .hist-card-badges{display:flex;gap:.4rem;margin-bottom:.85rem;flex-wrap:wrap}
+  .hist-mini-chart{height:60px;position:relative}
+  .hist-empty{text-align:center;padding:4rem 2rem;color:rgba(255,255,255,.3)}
+  .hist-empty-icon{font-size:2.5rem;margin-bottom:1rem}
+  .detalhe-header{display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem}
+  .btn-voltar{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.7);border-radius:8px;padding:.45rem .9rem;font-family:var(--font-body);font-size:.82rem;cursor:pointer;transition:background .2s}
+  .btn-voltar:hover{background:rgba(255,255,255,.1)}
+  .detalhe-title{font-family:var(--font-head);font-size:1.2rem;font-weight:800}
+  .detalhe-sub{font-size:.8rem;color:rgba(255,255,255,.4)}
+  .perfil-wrap{max-width:520px}
+  .perfil-avatar-big{width:72px;height:72px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;font-family:var(--font-head);font-size:1.8rem;font-weight:800;color:#fff;margin-bottom:1.25rem}
+  .perfil-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:1.25rem;margin-bottom:1rem}
+  .perfil-row{display:flex;align-items:center;justify-content:space-between;padding:.6rem 0;border-bottom:1px solid rgba(255,255,255,.05)}
+  .perfil-row:last-child{border-bottom:none}
+  .perfil-label{font-size:.75rem;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.06em}
+  .perfil-val{font-size:.9rem;color:rgba(255,255,255,.85);font-weight:500}
+  .perfil-section-title{font-family:var(--font-head);font-size:.85rem;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.75rem;margin-top:1.5rem}
+  .btn-perfil{display:inline-flex;align-items:center;gap:8px;background:rgba(30,111,217,.15);border:1px solid rgba(30,111,217,.3);color:#60a5fa;border-radius:8px;padding:.55rem 1.1rem;font-family:var(--font-body);font-size:.85rem;cursor:pointer;transition:background .2s;margin-top:.5rem}
+  .btn-perfil:hover{background:rgba(30,111,217,.25)}
+  .btn-danger{background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.25);color:#f87171}
+  .btn-danger:hover{background:rgba(239,68,68,.2)}
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:300;display:none;align-items:center;justify-content:center}
+  .modal-overlay.open{display:flex}
+  .modal-box{background:#112240;border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:1.75rem;width:100%;max-width:380px}
+  .modal-title{font-family:var(--font-head);font-size:1rem;font-weight:700;margin-bottom:1.25rem}
+  .modal-label{font-size:.75rem;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.4rem;display:block}
+  .modal-input{width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.65rem .9rem;color:#fff;font-family:var(--font-body);font-size:.9rem;margin-bottom:1rem;outline:none;transition:border-color .2s}
+  .modal-input:focus{border-color:var(--blue)}
+  .modal-btns{display:flex;gap:.75rem;justify-content:flex-end}
+  .modal-btn{padding:.5rem 1.1rem;border-radius:8px;font-family:var(--font-body);font-size:.85rem;cursor:pointer;border:none}
+  .modal-btn-cancel{background:rgba(255,255,255,.06);color:rgba(255,255,255,.6)}
+  .modal-btn-save{background:var(--blue);color:#fff}
+  .modal-msg{font-size:.8rem;margin-bottom:.75rem;padding:.5rem .75rem;border-radius:6px;display:none}
+  .modal-msg.ok{background:rgba(34,197,94,.1);color:#4ade80;display:block}
+  .modal-msg.err{background:rgba(239,68,68,.1);color:#f87171;display:block}
+
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-logo">ECHO<span>N</span></div>
+  <div class="loading-bar"><div class="loading-bar-fill"></div></div>
+</div>
+
+<div class="sidebar">
+  <div class="sb-logo">
+    <img src="Logo_W.png" class="sidebar-img" alt="Logo">
+  </div>
+  <div class="sb-divider"></div>
+  <div class="sb-icon active" id="sbDashboard" onclick="showPage('dashboard')" title="Dashboard">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+  </div>
+  <div class="sb-icon" id="sbHistorico" onclick="showPage('historico')" title="Histórico">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+  </div>
+  <div class="sb-icon" id="sbCSV" onclick="exportarCSV()" title="Exportar CSV">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+  </div>
+  <div class="sb-logout" title="Sair" onclick="sair()">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+  </div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div>
+        <div class="topbar-title" id="topbarTitle">Seu Dashboard de Informações</div>
+        <div class="topbar-sub" id="topbarSub">Carregando...</div>
+      </div>
+      <div class="live-badge" id="liveBadge"><div class="live-dot"></div> Ao vivo</div>
+    </div>
+    <div class="topbar-right">
+      <div class="client-chip" onclick="showPage('perfil')" style="cursor:pointer">
+        <div class="client-avatar" id="clientAvatar">?</div>
+        <div class="client-name" id="clientName">Carregando...</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="page active" id="page-dashboard">
+    <div class="greeting">
+      <h1>Olá, <span id="greetingName">...</span>! </h1>
+      <p id="greetingDate">Carregando dados do ambiente...</p>
+    </div>
+
+    <div class="device-bar">
+      <span class="device-label">Sensor:</span>
+      <div id="deviceBtns"></div>
+    </div>
+
+    <div class="metrics-grid">
+      <div class="metric-card mc-blue">
+        <div class="metric-label">Ruído Atual</div>
+        <div class="metric-val" id="mAtual">--</div>
+        <div class="metric-unit">dB(A)</div>
+        <div class="metric-badge badge-info" id="mStatus">Aguardando</div>
+      </div>
+      <div class="metric-card mc-green">
+        <div class="metric-label">Média do Dia</div>
+        <div class="metric-val" id="mMedia">--</div>
+        <div class="metric-unit">dB(A)</div>
+        <div class="metric-badge badge-info">Hoje</div>
+      </div>
+      <div class="metric-card mc-yellow">
+        <div class="metric-label">Pico Registrado</div>
+        <div class="metric-val" id="mPico">--</div>
+        <div class="metric-unit">dB(A)</div>
+        <div class="metric-badge badge-info" id="mPicoTime">--</div>
+      </div>
+      <div class="metric-card mc-red">
+        <div class="metric-label">Alertas Hoje</div>
+        <div class="metric-val" id="mAlertas">--</div>
+        <div class="metric-unit">ocorrências</div>
+        <div class="metric-badge badge-info">Últimas 24h</div>
+      </div>
+    </div>
+
+    <div class="charts-row">
+      <div class="panel">
+        <div class="panel-title">Histórico de Ruído – últimas medições</div>
+        <div style="position:relative;height:200px">
+          <canvas id="mainChart" role="img" aria-label="Gráfico histórico de ruído">Histórico de medições de ruído em dB(A).</canvas>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Alertas Recentes</div>
+        <div class="alerts-list" id="alertsList">
+          <div class="no-data">Carregando alertas...</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tips-row">
+      <div class="tip-card">
+        <div class="tip-icon t-green">🎧</div>
+        <div class="tip-title">Use isolamento acústico</div>
+        <div class="tip-text">Painéis absorventes nas paredes e teto reduzem o eco e a reverberação, diminuindo a percepção de ruído em até 40%.</div>
+      </div>
+      <div class="tip-card">
+        <div class="tip-icon t-blue">📅</div>
+        <div class="tip-title">Gerencie horários críticos</div>
+        <div class="tip-text">Identifique os horários de maior ruído no histórico e reorganize atividades barulhentas para períodos de menor movimento.</div>
+      </div>
+      <div class="tip-card">
+        <div class="tip-icon t-yellow">🔔</div>
+        <div class="tip-title">Configure limites de alerta</div>
+        <div class="tip-text">Defina thresholds personalizados para receber notificações antes que o ruído impacte negativamente o ambiente de trabalho.</div>
+      </div>
+      <div class="tip-card">
+        <div class="tip-icon t-green">🌿</div>
+        <div class="tip-title">Plantas e barreiras naturais</div>
+        <div class="tip-text">Vegetação e divisórias com material poroso ajudam a bloquear e absorver ondas sonoras de forma natural.</div>
+      </div>
+      <div class="tip-card">
+        <div class="tip-icon t-blue">👥</div>
+        <div class="tip-title">Conscientize a equipe</div>
+        <div class="tip-text">Compartilhe os dados do painel com sua equipe. Quando as pessoas entendem o impacto do ruído, adotam comportamentos mais silenciosos.</div>
+      </div>
+      <div class="tip-card">
+        <div class="tip-icon t-yellow">🔧</div>
+        <div class="tip-title">Manutenção preventiva</div>
+        <div class="tip-text">Equipamentos com manutenção em dia produzem menos ruído. Verifique regularmente ar-condicionados e outros aparelhos.</div>
+      </div>
+    </div>
+    </div><!-- end page-dashboard -->
+
+    <!-- HISTÓRICO -->
+    <div class="page" id="page-historico">
+      <div class="hist-header">
+        <div><h2>Histórico de Medições</h2><p>Clique em uma medição para ver todos os detalhes</p></div>
+      </div>
+      <div class="hist-grid" id="histGrid"><div class="no-data">Carregando histórico...</div></div>
+    </div>
+
+    <!-- DETALHE -->
+    <div class="page" id="page-detalhe">
+      <div class="detalhe-header">
+        <button class="btn-voltar" onclick="showPage('historico')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15,18 9,12 15,6"/></svg>
+          Voltar ao histórico
+        </button>
+        <div><div class="detalhe-title" id="detalheTitulo">Medição</div><div class="detalhe-sub" id="detalheSub"></div></div>
+      </div>
+      <div class="metrics-grid">
+        <div class="metric-card mc-blue"><div class="metric-label">Ruído Registrado</div><div class="metric-val" id="dAtual">--</div><div class="metric-unit">dB(A)</div><div class="metric-badge badge-info" id="dStatus">--</div></div>
+        <div class="metric-card mc-green"><div class="metric-label">Média do Dia</div><div class="metric-val" id="dMedia">--</div><div class="metric-unit">dB(A)</div><div class="metric-badge badge-info">neste dia</div></div>
+        <div class="metric-card mc-yellow"><div class="metric-label">Pico Registrado</div><div class="metric-val" id="dPico">--</div><div class="metric-unit">dB(A)</div><div class="metric-badge badge-info">neste dia</div></div>
+        <div class="metric-card mc-red"><div class="metric-label">Total de Alertas</div><div class="metric-val" id="dAlertas">--</div><div class="metric-unit">ocorrências</div><div class="metric-badge badge-info">neste dia</div></div>
+      </div>
+      <div class="charts-row">
+        <div class="panel"><div class="panel-title">Histórico do dia</div><div style="position:relative;height:200px"><canvas id="detalheChart" role="img" aria-label="Gráfico do dia">Medições do dia.</canvas></div></div>
+        <div class="panel"><div class="panel-title">Alertas do Dia</div><div class="alerts-list" id="detalheAlerts"><div class="no-data">Sem alertas</div></div></div>
+      </div>
+    </div>
+
+    <!-- PERFIL -->
+    <div class="page" id="page-perfil">
+      <div class="perfil-wrap">
+        <div class="perfil-avatar-big" id="perfilAvatar">?</div>
+        <div class="perfil-section-title">Informações da conta</div>
+        <div class="perfil-card">
+          <div class="perfil-row"><span class="perfil-label">Nome</span><span class="perfil-val" id="perfilNome">--</span></div>
+          <div class="perfil-row"><span class="perfil-label">E-mail</span><span class="perfil-val" id="perfilEmail">--</span></div>
+          <div class="perfil-row"><span class="perfil-label">Plano</span><span class="perfil-val">ECHON Monitoramento</span></div>
+        </div>
+        <div class="perfil-section-title">Segurança</div>
+        <button class="btn-perfil" onclick="abrirModal()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Trocar senha
+        </button>
+        <div class="perfil-section-title">Sessão</div>
+        <button class="btn-perfil btn-danger" onclick="sair()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Sair da conta
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+  const API = 'http://localhost:3000';
+  let clienteObj=null, mainChart=null, detalheChart=null, dadosGlobais=null, medicaoAtiva=null;
+
+  window.addEventListener('DOMContentLoaded', async () => {
+    const token = localStorage.getItem('echon_token');
+    const clienteRaw = localStorage.getItem('echon_cliente');
+    if (!token || !clienteRaw) { window.location.replace('index.html'); return; }
+    clienteObj = JSON.parse(clienteRaw);
+    const nome = clienteObj.nome || 'Cliente';
+    const ini = nome.charAt(0).toUpperCase();
+    document.getElementById('greetingName').textContent = nome;
+    document.getElementById('clientName').textContent = nome;
+    document.getElementById('clientAvatar').textContent = ini;
+    document.getElementById('perfilAvatar').textContent = ini;
+    document.getElementById('perfilNome').textContent = nome;
+    document.getElementById('perfilEmail').textContent = clienteObj.email || '--';
+    document.getElementById('greetingDate').textContent = new Date().toLocaleDateString('pt-BR', {weekday:'long',day:'numeric',month:'long',year:'numeric'});
+    document.getElementById('topbarSub').textContent = 'Monitoramento em tempo real';
+    await carregarDados();
+    setTimeout(() => { document.getElementById('loadingOverlay').classList.add('hide'); document.body.classList.add('loaded'); }, 1400);
+    setInterval(carregarDados, 10000);
+  });
+
+  function showPage(page) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.sb-icon').forEach(i => i.classList.remove('active'));
+    document.getElementById('page-' + page).classList.add('active');
+    const titles = {dashboard:'Seu Dashboard de Informações', historico:'Histórico de Medições', detalhe:'Detalhe da Medição', perfil:'Meu Perfil'};
+    document.getElementById('topbarTitle').textContent = titles[page] || '';
+    document.getElementById('liveBadge').style.display = page === 'dashboard' ? 'flex' : 'none';
+    if (page === 'dashboard') document.getElementById('sbDashboard').classList.add('active');
+    if (page === 'historico' || page === 'detalhe') { document.getElementById('sbHistorico').classList.add('active'); if (page === 'historico') renderizarHistoricoCards(); }
+    if (page === 'historico') medicaoAtiva = null;
+  }
+
+  async function carregarDados() {
+    const token = localStorage.getItem('echon_token');
+    try {
+      const res = await fetch(`${API}/api/dashboard`, { headers: { Authorization: `Bearer ${token}` } });
+      if (res.status === 401) { sair(); return; }
+      const data = await res.json();
+      dadosGlobais = data;
+      renderizarDispositivos(data.dispositivos);
+      renderizarMetrics(data.stats, data.alertas);
+      renderizarHistoricoGrafico(data.medicoes);
+      renderizarAlertas(data.alertas);
+    } catch (e) { renderizarSimulado(); }
+  }
+
+  function renderizarDispositivos(lista) {
+    if (!lista || !lista.length) return;
+    const c = document.getElementById('deviceBtns');
+    if (c.children.length > 0) return;
+    lista.forEach((d, i) => { const b = document.createElement('button'); b.className = 'device-btn' + (i===0?' active':''); b.textContent = `${d.nome} – ${d.local}`; c.appendChild(b); });
+  }
+
+  function renderizarMetrics(stats, alertas) {
+    if (!stats || !stats.atual) return;
+    const val = parseFloat(stats.atual);
+    document.getElementById('mAtual').textContent = Math.round(val);
+    document.getElementById('mMedia').textContent = stats.media || '--';
+    document.getElementById('mPico').textContent = stats.pico ? Math.round(stats.pico) : '--';
+    document.getElementById('mAlertas').textContent = alertas ? alertas.length : 0;
+    const s = document.getElementById('mStatus');
+    if (val>=80) { s.textContent='● Alto'; s.className='metric-badge badge-high'; }
+    else if (val>=60) { s.textContent='● Moderado'; s.className='metric-badge badge-moderate'; }
+    else { s.textContent='● Baixo'; s.className='metric-badge badge-low'; }
+  }
+
+  function renderizarHistoricoGrafico(medicoes) {
+    if (!medicoes || !medicoes.length) return;
+    const lista = [...medicoes].reverse().slice(0, 24);
+    const labels = lista.map(m => { const d = new Date(m.registrado_em); return d.getHours().toString().padStart(2,'0')+'h'+d.getMinutes().toString().padStart(2,'0'); });
+    const valores = lista.map(m => parseFloat(m.db_valor));
+    if (!mainChart) {
+      mainChart = new Chart(document.getElementById('mainChart'), {
+        type: 'line',
+        data: { labels, datasets: [
+          {label:'dB(A)', data:valores, borderColor:'#3B8EF3', backgroundColor:'rgba(59,142,243,.1)', borderWidth:2, fill:true, tension:.4, pointRadius:3, pointBackgroundColor:'#3B8EF3'},
+          {label:'Limite', data:Array(labels.length).fill(65), borderColor:'rgba(239,68,68,.5)', borderWidth:1.5, borderDash:[5,4], pointRadius:0, fill:false}
+        ]},
+        options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false}, tooltip:{backgroundColor:'#0F1E35',titleColor:'rgba(255,255,255,.5)',bodyColor:'#fff',padding:10,cornerRadius:8,displayColors:false,callbacks:{label:c=>c.datasetIndex===0?c.parsed.y.toFixed(1)+' dB(A)':'Limite: 65 dB'}} }, scales:{ x:{ticks:{color:'rgba(255,255,255,.3)',font:{size:10},maxRotation:0,autoSkip:true,maxTicksLimit:8},grid:{color:'rgba(255,255,255,.04)'}}, y:{min:25,max:95,ticks:{color:'rgba(255,255,255,.3)',font:{size:10},callback:v=>v+' dB'},grid:{color:'rgba(255,255,255,.05)'}} } }
+      });
+    } else {
+      mainChart.data.labels = labels;
+      mainChart.data.datasets[0].data = valores;
+      mainChart.data.datasets[1].data = Array(labels.length).fill(65);
+      mainChart.update('none');
+    }
+  }
+
+  function renderizarAlertas(alertas) {
+    const c = document.getElementById('alertsList');
+    if (!alertas || !alertas.length) { c.innerHTML = '<div class="no-data">Nenhum alerta hoje 🎉</div>'; return; }
+    c.innerHTML = alertas.slice(0,5).map(a => {
+      const cls = a.tipo==='alto'?'a-red':a.tipo==='moderado'?'a-yellow':'a-green';
+      const icon = a.tipo==='alto'?'⚠':a.tipo==='moderado'?'◉':'✓';
+      const hora = new Date(a.registrado_em).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+      return `<div class="alert-item ${cls}"><span class="alert-icon">${icon}</span><div><div class="alert-text">${a.mensagem} – ${a.dispositivo_nome}</div><div class="alert-meta">Hoje, ${hora}</div></div></div>`;
+    }).join('');
+  }
+
+  function renderizarHistoricoCards() {
+    const grid = document.getElementById('histGrid');
+    if (!dadosGlobais || !dadosGlobais.medicoes || !dadosGlobais.medicoes.length) {
+      grid.innerHTML = '<div class="hist-empty"><div class="hist-empty-icon">📂</div><div>Nenhuma medição encontrada ainda.</div><div style="font-size:.75rem;margin-top:.5rem">Os dados aparecerão aqui quando o sensor começar a enviar medições.</div></div>';
+      return;
+    }
+    const porDia = {};
+    dadosGlobais.medicoes.forEach(m => { const chave = new Date(m.registrado_em).toLocaleDateString('pt-BR'); if (!porDia[chave]) porDia[chave]=[]; porDia[chave].push(m); });
+    grid.innerHTML = '';
+    Object.entries(porDia).forEach(([data, medicoes]) => {
+      const vals = medicoes.map(m => parseFloat(m.db_valor));
+      const media = (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1);
+      const pico = Math.max(...vals).toFixed(1);
+      const sc = pico>=80?'badge-high':pico>=60?'badge-moderate':'badge-low';
+      const st = pico>=80?'Alto':pico>=60?'Moderado':'Baixo';
+      const id = 'mini-' + data.replace(/\//g,'-');
+      const card = document.createElement('div');
+      card.className = 'hist-card';
+      card.innerHTML = `<div class="hist-card-title">Medição – ${data}</div><div class="hist-card-sub"><span>${medicoes.length} leituras</span></div><div class="hist-card-badges"><span class="metric-badge badge-info">Média: ${media} dB</span><span class="metric-badge badge-high">Pico: ${pico} dB</span><span class="metric-badge ${sc}">${st}</span></div><div class="hist-mini-chart"><canvas id="${id}" role="img" aria-label="Mini gráfico de ${data}"></canvas></div>`;
+      card.onclick = () => abrirDetalhe(data, medicoes);
+      grid.appendChild(card);
+      setTimeout(() => {
+        const ctx = document.getElementById(id);
+        if (!ctx) return;
+        new Chart(ctx, {type:'line', data:{labels:Array(vals.length).fill(''), datasets:[{data:[...vals].reverse(), borderColor:'#3B8EF3', borderWidth:1.5, fill:true, backgroundColor:'rgba(59,142,243,.08)', tension:.4, pointRadius:0}]}, options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false},tooltip:{enabled:false}}, scales:{x:{display:false},y:{display:false}}, animation:false}});
+      }, 50);
+    });
+  }
+
+  function abrirDetalhe(data, medicoes) {
+    medicaoAtiva = {data, medicoes};
+    showPage('detalhe');
+    const vals = medicoes.map(m => parseFloat(m.db_valor));
+    const media = (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1);
+    const pico = Math.max(...vals).toFixed(1);
+    const alertasDia = dadosGlobais.alertas ? dadosGlobais.alertas.filter(a => new Date(a.registrado_em).toLocaleDateString('pt-BR')===data) : [];
+    document.getElementById('detalheTitulo').textContent = `Medição – ${data}`;
+    document.getElementById('detalheSub').textContent = `${medicoes.length} leituras registradas`;
+    document.getElementById('dAtual').textContent = Math.round(vals[0]);
+    document.getElementById('dMedia').textContent = media;
+    document.getElementById('dPico').textContent = pico;
+    document.getElementById('dAlertas').textContent = alertasDia.length;
+    const s = document.getElementById('dStatus');
+    if (pico>=80) { s.textContent='● Alto'; s.className='metric-badge badge-high'; }
+    else if (pico>=60) { s.textContent='● Moderado'; s.className='metric-badge badge-moderate'; }
+    else { s.textContent='● Baixo'; s.className='metric-badge badge-low'; }
+    const lista = [...medicoes].reverse();
+    const labels = lista.map(m => { const d = new Date(m.registrado_em); return d.getHours().toString().padStart(2,'0')+'h'+d.getMinutes().toString().padStart(2,'0'); });
+    if (detalheChart) { detalheChart.destroy(); detalheChart = null; }
+    detalheChart = new Chart(document.getElementById('detalheChart'), {
+      type:'line',
+      data:{labels, datasets:[
+        {label:'dB(A)', data:lista.map(m=>parseFloat(m.db_valor)), borderColor:'#3B8EF3', backgroundColor:'rgba(59,142,243,.1)', borderWidth:2, fill:true, tension:.4, pointRadius:3},
+        {label:'Limite', data:Array(labels.length).fill(65), borderColor:'rgba(239,68,68,.5)', borderWidth:1.5, borderDash:[5,4], pointRadius:0, fill:false}
+      ]},
+      options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{ticks:{color:'rgba(255,255,255,.3)',font:{size:10},maxRotation:0,autoSkip:true,maxTicksLimit:8},grid:{color:'rgba(255,255,255,.04)'}}, y:{min:25,max:95,ticks:{color:'rgba(255,255,255,.3)',font:{size:10},callback:v=>v+' dB'},grid:{color:'rgba(255,255,255,.05)'}}}}
+    });
+    const ae = document.getElementById('detalheAlerts');
+    if (!alertasDia.length) { ae.innerHTML = '<div class="no-data">Nenhum alerta neste dia 🎉</div>'; }
+    else { ae.innerHTML = alertasDia.slice(0,5).map(a => { const cls=a.tipo==='alto'?'a-red':a.tipo==='moderado'?'a-yellow':'a-green'; const icon=a.tipo==='alto'?'⚠':a.tipo==='moderado'?'◉':'✓'; const hora=new Date(a.registrado_em).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); return `<div class="alert-item ${cls}"><span class="alert-icon">${icon}</span><div><div class="alert-text">${a.mensagem}</div><div class="alert-meta">${hora}</div></div></div>`; }).join(''); }
+  }
+
+  function exportarCSV() {
+    let medicoes, nome;
+    if (medicaoAtiva) { medicoes = medicaoAtiva.medicoes; nome = `echon-medicao-${medicaoAtiva.data.replace(/\//g,'-')}.csv`; }
+    else if (dadosGlobais && dadosGlobais.medicoes && dadosGlobais.medicoes.length) { medicoes = dadosGlobais.medicoes; nome = 'echon-todas-medicoes.csv'; }
+    else { alert('Nenhum dado disponível.\nAbra uma medição no Histórico para exportar um dia específico.'); return; }
+    const linhas = ['Data,Hora,dB(A),Dispositivo,Local'];
+    medicoes.forEach(m => { const d = new Date(m.registrado_em); linhas.push(`${d.toLocaleDateString('pt-BR')},${d.toLocaleTimeString('pt-BR')},${parseFloat(m.db_valor).toFixed(2)},${m.dispositivo_nome||'--'},${m.dispositivo_local||'--'}`); });
+    const blob = new Blob([linhas.join('\n')], {type:'text/csv;charset=utf-8;'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = nome; a.click(); URL.revokeObjectURL(url);
+  }
+
+  function abrirModal() { document.getElementById('modalSenha').classList.add('open'); document.getElementById('modalMsg').className='modal-msg'; ['senhaAtual','senhaNova','senhaConfirm'].forEach(id => document.getElementById(id).value=''); }
+  function fecharModal() { document.getElementById('modalSenha').classList.remove('open'); }
+  function trocarSenha() {
+    const atual=document.getElementById('senhaAtual').value, nova=document.getElementById('senhaNova').value, conf=document.getElementById('senhaConfirm').value;
+    const msg = document.getElementById('modalMsg');
+    if (!atual||!nova||!conf) { msg.textContent='Preencha todos os campos.'; msg.className='modal-msg err'; return; }
+    if (nova!==conf) { msg.textContent='As senhas não coincidem.'; msg.className='modal-msg err'; return; }
+    if (nova.length<6) { msg.textContent='A nova senha deve ter pelo menos 6 caracteres.'; msg.className='modal-msg err'; return; }
+    msg.textContent='Senha alterada com sucesso!'; msg.className='modal-msg ok';
+    setTimeout(() => fecharModal(), 1500);
+  }
+
+  function renderizarSimulado() {
+    document.getElementById('mAtual').textContent = '58';
+    document.getElementById('mMedia').textContent = '46';
+    document.getElementById('mPico').textContent = '82';
+    document.getElementById('mAlertas').textContent = '3';
+    document.getElementById('mStatus').textContent = '● Moderado';
+    document.getElementById('mStatus').className = 'metric-badge badge-moderate';
+    const labels = ['06h','07h','08h','09h','10h','11h','12h','13h','14h','15h','16h','17h'];
+    const valores = [38,42,55,58,61,54,48,62,78,82,65,58];
+    if (!mainChart) {
+      mainChart = new Chart(document.getElementById('mainChart'), {
+        type:'line',
+        data:{labels, datasets:[
+          {label:'dB(A)', data:valores, borderColor:'#3B8EF3', backgroundColor:'rgba(59,142,243,.1)', borderWidth:2, fill:true, tension:.4, pointRadius:3},
+          {label:'Limite', data:Array(12).fill(65), borderColor:'rgba(239,68,68,.5)', borderWidth:1.5, borderDash:[5,4], pointRadius:0, fill:false}
+        ]},
+        options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{ticks:{color:'rgba(255,255,255,.3)',font:{size:10}},grid:{color:'rgba(255,255,255,.04)'}}, y:{min:25,max:95,ticks:{color:'rgba(255,255,255,.3)',font:{size:10},callback:v=>v+' dB'},grid:{color:'rgba(255,255,255,.05)'}}}}
+      });
+    }
+    document.getElementById('alertsList').innerHTML = '<div class="alert-item a-red"><span class="alert-icon">⚠</span><div><div class="alert-text">Pico de 82 dB – Sala A</div><div class="alert-meta">Hoje, 14:32</div></div></div><div class="alert-item a-yellow"><span class="alert-icon">◉</span><div><div class="alert-text">Ruído elevado por 12 min</div><div class="alert-meta">Hoje, 11:15</div></div></div><div class="alert-item a-green"><span class="alert-icon">✓</span><div><div class="alert-text">Ambiente normalizado</div><div class="alert-meta">Hoje, 08:10</div></div></div>';
+    document.getElementById('deviceBtns').innerHTML = '<button class="device-btn active">Sensor Principal – Ambiente</button>';
+    if (!dadosGlobais) {
+      const agora = new Date(); const medicoes = [];
+      for (let dia=0; dia<5; dia++) { for (let i=0; i<12; i++) { const d=new Date(agora); d.setDate(d.getDate()-dia); d.setHours(6+i,Math.floor(Math.random()*60),0,0); medicoes.push({db_valor:(35+Math.random()*50).toFixed(1), registrado_em:d.toISOString(), dispositivo_nome:'Sensor Principal', dispositivo_local:'Ambiente'}); } }
+      dadosGlobais = {medicoes, alertas:[], dispositivos:[{nome:'Sensor Principal',local:'Ambiente',ativo:true}], stats:{atual:58,media:46,pico:82}};
+    }
+  }
+
+  function sair() {
+    localStorage.removeItem('echon_token');
+    localStorage.removeItem('echon_cliente');
+    window.location.replace('index.html');
+  }
+
+
+
+  let dispositivos = [];
+  let dispositivoAtivo = null;
+
+  let refreshInterval = null;
+
+  window.addEventListener('DOMContentLoaded', async () => {
+    const token = localStorage.getItem('echon_token');
+    const clienteRaw = localStorage.getItem('echon_cliente');
+
+    if (!token || !clienteRaw) {
+      window.location.replace('index.html');
+      return;
+    }
+
+    clienteObj = JSON.parse(clienteRaw);
+    const nome = clienteObj.nome || 'Cliente';
+    const inicial = nome.charAt(0).toUpperCase();
+
+    document.getElementById('greetingName').textContent = nome;
+    document.getElementById('clientName').textContent = nome;
+    document.getElementById('clientAvatar').textContent = inicial;
+    document.getElementById('greetingDate').textContent = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    document.getElementById('topbarSub').textContent = 'Monitoramento em tempo real';
+
+    await carregarDados();
+
+    setTimeout(() => {
+      document.getElementById('loadingOverlay').classList.add('hide');
+      document.body.classList.add('loaded');
+    }, 1400);
+
+    refreshInterval = setInterval(carregarDados, 10000);
+  });
+
+  async function carregarDados() {
+    const token = localStorage.getItem('echon_token');
+    try {
+      const res = await fetch(`${API}/api/dashboard`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (res.status === 401) { sair(); return; }
+
+      const data = await res.json();
+      renderizarDispositivos(data.dispositivos);
+      renderizarMetrics(data.stats, data.alertas);
+      renderizarHistorico(data.medicoes);
+      renderizarAlertas(data.alertas);
+
+    } catch (e) {
+      console.error('Erro ao buscar dados:', e);
+      renderizarSimulado();
+    }
+  }
+
+  function renderizarDispositivos(lista) {
+    if (!lista || !lista.length) return;
+    const container = document.getElementById('deviceBtns');
+    if (container.children.length > 0) return;
+    lista.forEach((d, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'device-btn' + (i === 0 ? ' active' : '');
+      btn.textContent = `${d.nome} – ${d.local}`;
+      container.appendChild(btn);
+    });
+  }
+
+  function renderizarMetrics(stats, alertas) {
+    if (!stats || !stats.atual) return;
+    const val = parseFloat(stats.atual);
+    document.getElementById('mAtual').textContent = Math.round(val);
+    document.getElementById('mMedia').textContent = stats.media || '--';
+    document.getElementById('mPico').textContent = stats.pico ? Math.round(stats.pico) : '--';
+    document.getElementById('mAlertas').textContent = alertas ? alertas.length : 0;
+
+    const statusEl = document.getElementById('mStatus');
+    if (val >= 80)      { statusEl.textContent = '● Alto';     statusEl.className = 'metric-badge badge-high'; }
+    else if (val >= 60) { statusEl.textContent = '● Moderado'; statusEl.className = 'metric-badge badge-moderate'; }
+    else                { statusEl.textContent = '● Baixo';    statusEl.className = 'metric-badge badge-low'; }
+  }
+
+  function renderizarHistorico(medicoes) {
+    if (!medicoes || !medicoes.length) return;
+    const lista = [...medicoes].reverse().slice(0, 24);
+    const labels = lista.map(m => {
+      const d = new Date(m.registrado_em);
+      return d.getHours().toString().padStart(2,'0') + 'h' + d.getMinutes().toString().padStart(2,'0');
+    });
+    const valores = lista.map(m => parseFloat(m.db_valor));
+
+    if (!mainChart) {
+      const ctx = document.getElementById('mainChart');
+      mainChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            { label: 'dB(A)', data: valores, borderColor: '#3B8EF3', backgroundColor: 'rgba(59,142,243,.1)', borderWidth: 2, fill: true, tension: .4, pointRadius: 3, pointBackgroundColor: '#3B8EF3' },
+            { label: 'Limite', data: Array(labels.length).fill(65), borderColor: 'rgba(239,68,68,.5)', borderWidth: 1.5, borderDash: [5,4], pointRadius: 0, fill: false }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false }, tooltip: { backgroundColor: '#0F1E35', titleColor: 'rgba(255,255,255,.5)', bodyColor: '#fff', padding: 10, cornerRadius: 8, displayColors: false, callbacks: { label: c => c.datasetIndex === 0 ? c.parsed.y.toFixed(1) + ' dB(A)' : 'Limite: 65 dB' } } },
+          scales: {
+            x: { ticks: { color: 'rgba(255,255,255,.3)', font:{size:10}, maxRotation:0, autoSkip: true, maxTicksLimit: 8 }, grid: { color: 'rgba(255,255,255,.04)' } },
+            y: { min: 25, max: 95, ticks: { color: 'rgba(255,255,255,.3)', font:{size:10}, callback: v => v+' dB' }, grid: { color: 'rgba(255,255,255,.05)' } }
+          }
+        }
+      });
+    } else {
+      mainChart.data.labels = labels;
+      mainChart.data.datasets[0].data = valores;
+      mainChart.data.datasets[1].data = Array(labels.length).fill(65);
+      mainChart.update('none');
+    }
+  }
+
+  function renderizarAlertas(alertas) {
+    const container = document.getElementById('alertsList');
+    if (!alertas || !alertas.length) {
+      container.innerHTML = '<div class="no-data">Nenhum alerta registrado hoje 🎉</div>';
+      return;
+    }
+    container.innerHTML = alertas.slice(0,5).map(a => {
+      const cls  = a.tipo === 'alto' ? 'a-red' : a.tipo === 'moderado' ? 'a-yellow' : 'a-green';
+      const icon = a.tipo === 'alto' ? '⚠' : a.tipo === 'moderado' ? '◉' : '✓';
+      const hora = new Date(a.registrado_em).toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
+      return `<div class="alert-item ${cls}"><span class="alert-icon">${icon}</span><div><div class="alert-text">${a.mensagem} – ${a.dispositivo_nome}</div><div class="alert-meta">Hoje, ${hora}</div></div></div>`;
+    }).join('');
+  }
+
+  function renderizarSimulado() {
+    document.getElementById('mAtual').textContent = '58';
+    document.getElementById('mMedia').textContent = '46';
+    document.getElementById('mPico').textContent = '82';
+    document.getElementById('mAlertas').textContent = '3';
+    document.getElementById('mStatus').textContent = '● Moderado';
+    document.getElementById('mStatus').className = 'metric-badge badge-moderate';
+
+    const labels = ['06h','07h','08h','09h','10h','11h','12h','13h','14h','15h','16h','17h'];
+    const valores = [38,42,55,58,61,54,48,62,78,82,65,58];
+
+    if (!mainChart) {
+      mainChart = new Chart(document.getElementById('mainChart'), {
+        type: 'line',
+        data: { labels, datasets: [
+          { label: 'dB(A)', data: valores, borderColor: '#3B8EF3', backgroundColor: 'rgba(59,142,243,.1)', borderWidth: 2, fill: true, tension: .4, pointRadius: 3 },
+          { label: 'Limite', data: Array(12).fill(65), borderColor: 'rgba(239,68,68,.5)', borderWidth: 1.5, borderDash: [5,4], pointRadius: 0, fill: false }
+        ]},
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: 'rgba(255,255,255,.3)', font:{size:10} }, grid: { color: 'rgba(255,255,255,.04)' } }, y: { min: 25, max: 95, ticks: { color: 'rgba(255,255,255,.3)', font:{size:10}, callback: v => v+' dB' }, grid: { color: 'rgba(255,255,255,.05)' } } } }
+      });
+    }
+
+    document.getElementById('alertsList').innerHTML = `
+      <div class="alert-item a-red"><span class="alert-icon">⚠</span><div><div class="alert-text">Pico de 82 dB – Sala A</div><div class="alert-meta">Hoje, 14:32</div></div></div>
+      <div class="alert-item a-yellow"><span class="alert-icon">◉</span><div><div class="alert-text">Ruído elevado por 12 min</div><div class="alert-meta">Hoje, 11:15</div></div></div>
+      <div class="alert-item a-green"><span class="alert-icon">✓</span><div><div class="alert-text">Ambiente normalizado</div><div class="alert-meta">Hoje, 08:10</div></div></div>`;
+
+    document.getElementById('deviceBtns').innerHTML = '<button class="device-btn active">Sensor Principal – Ambiente</button>';
+  }
+
+  function sair() {
+    localStorage.removeItem('echon_token');
+    localStorage.removeItem('echon_cliente');
+    window.location.replace('index.html');
+  }
+</script>
+</body>
+</html>

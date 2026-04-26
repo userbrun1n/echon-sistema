@@ -32,10 +32,16 @@
     padding: 1.5rem 2.5rem 2.5rem 2.5rem;
     width: 100%;
     max-width: 420px;
+    max-height: 92vh;
+    overflow-y: auto;
     position: relative;
     z-index: 1;
     box-shadow: 0 32px 80px rgba(0,0,0,.4);
+    scrollbar-width: thin;
+    scrollbar-color: rgba(30,111,217,.4) transparent;
   }
+  .card::-webkit-scrollbar { width: 4px; }
+  .card::-webkit-scrollbar-thumb { background: rgba(30,111,217,.4); border-radius: 4px; }
 
   .logo {
     font-family: 'Syne', sans-serif;
@@ -166,11 +172,55 @@
     padding: .6rem .9rem;
     font-size: .78rem;
     color: #00C7BE;
-    margin-bottom: 1rem;
-    display: none;
+    margin-bottom: .6rem;
     word-break: break-all;
   }
   .token-gerado span { font-weight: 600; }
+  .tokens-lista { display: flex; flex-direction: column; gap: .5rem; margin-bottom: 1rem; display: none; }
+  .sensores-lista { display: flex; flex-direction: column; gap: .75rem; margin-bottom: 1rem; }
+  .sensor-item {
+    background: rgba(255,255,255,.03);
+    border: 1px solid rgba(255,255,255,.07);
+    border-radius: 10px;
+    padding: .75rem;
+  }
+  .sensor-item-title {
+    font-size: .72rem; color: rgba(255,255,255,.4);
+    text-transform: uppercase; letter-spacing: .06em;
+    margin-bottom: .5rem;
+  }
+  .sensor-item input { margin-bottom: .6rem; }
+  .sensor-item input:last-child { margin-bottom: 0; }
+  .qtd-sensores-row { display: flex; align-items: center; gap: .75rem; margin-bottom: 1.25rem; }
+  .qtd-sensores-row label { margin-bottom: 0; white-space: nowrap; }
+  .qtd-input {
+    width: 70px;
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 10px;
+    padding: .6rem .75rem;
+    color: #fff;
+    font-family: 'DM Sans', sans-serif;
+    font-size: .95rem;
+    margin-bottom: 0;
+    text-align: center;
+    outline: none;
+    transition: border-color .2s;
+  }
+  .qtd-input:focus { border-color: #1E6FD9; }
+  .btn-qtd {
+    background: rgba(30,111,217,.15);
+    border: 1px solid rgba(30,111,217,.3);
+    color: #60a5fa;
+    border-radius: 8px;
+    padding: .5rem .85rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: .82rem;
+    cursor: pointer;
+    transition: background .2s;
+    white-space: nowrap;
+  }
+  .btn-qtd:hover { background: rgba(30,111,217,.25); }
   .admin-link {
     color: rgba(255,255,255,.08);
     font-size: .7rem;
@@ -202,7 +252,7 @@
   <!-- ADMIN (oculto) -->
   <div id="tab-admin" style="display:none">
     <div id="admin-lock">
-      <p class="subtitle">Área restrita.</p>
+      <p class="subtitle">Área restrita a administradores.</p>
       <div class="erro" id="erroAdmin"></div>
       <label>Senha de administrador</label>
       <input type="password" id="senhaAdmin" placeholder="••••••••" />
@@ -211,20 +261,32 @@
     <div id="admin-panel" style="display:none">
       <div class="sucesso" id="sucessoAdmin"></div>
       <div class="erro" id="erroAdminForm"></div>
+
       <div class="admin-section-title">Novo Cliente</div>
       <label>Nome da empresa</label>
-      <input type="text" id="adm-nome" placeholder="Ex: Cinemark" />
+      <input type="text" id="adm-nome" placeholder="Ex: Senac" />
       <label>E-mail de acesso</label>
       <input type="email" id="adm-email" placeholder="cliente@empresa.com" />
       <label>Senha de acesso</label>
       <input type="password" id="adm-senha" placeholder="Senha do cliente" />
-      <div class="admin-section-title">Dispositivo / Sensor</div>
-      <label>Nome do sensor</label>
-      <input type="text" id="adm-disp-nome" placeholder="Ex: Sensor Sala 1" />
-      <label>Local de instalação</label>
-      <input type="text" id="adm-disp-local" placeholder="Ex: Corredor principal" />
-      <div class="token-gerado" id="tokenGerado">Token do sensor: <span id="tokenValor"></span></div>
-      <button class="btn-login" id="btnCadastrar" onclick="cadastrarCliente()">Cadastrar cliente e sensor</button>
+
+      <div class="admin-section-title">Sensores</div>
+      <div class="qtd-sensores-row">
+        <label>Quantos sensores?</label>
+        <input type="number" class="qtd-input" id="adm-qtd" min="1" max="10" value="1" />
+        <button class="btn-qtd" onclick="gerarCamposSensores()">Confirmar</button>
+      </div>
+      <div class="sensores-lista" id="sensoresLista">
+        <div class="sensor-item">
+          <div class="sensor-item-title">Sensor 1</div>
+          <input type="text" placeholder="Nome do sensor (Ex: Sensor Sala 1)" />
+          <input type="text" placeholder="Local de instalação (Ex: Corredor)" />
+        </div>
+      </div>
+
+      <div class="tokens-lista" id="tokensLista"></div>
+
+      <button class="btn-login" id="btnCadastrar" onclick="cadastrarCliente()">Cadastrar cliente e sensores</button>
       <button style="width:100%;background:transparent;border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.4);border-radius:10px;padding:.6rem;font-family:'DM Sans',sans-serif;font-size:.82rem;cursor:pointer;margin-top:.75rem;transition:background .2s" onclick="sairAdmin()">Sair do modo admin</button>
     </div>
   </div>
@@ -303,31 +365,59 @@
     document.getElementById('senhaAdmin').value = '';
   }
 
-  // ── ADMIN: CADASTRAR CLIENTE + DISPOSITIVO ──
+  // ── ADMIN: GERAR CAMPOS DE SENSORES ──
+  function gerarCamposSensores() {
+    const qtd = parseInt(document.getElementById('adm-qtd').value) || 1;
+    const lista = document.getElementById('sensoresLista');
+    lista.innerHTML = '';
+    for (let i = 1; i <= qtd; i++) {
+      const item = document.createElement('div');
+      item.className = 'sensor-item';
+      item.innerHTML = `
+        <div class="sensor-item-title">Sensor ${i}</div>
+        <input type="text" id="adm-disp-nome-${i}" placeholder="Nome do sensor (Ex: Sensor Sala ${i})" />
+        <input type="text" id="adm-disp-local-${i}" placeholder="Local de instalação (Ex: Corredor)" />
+      `;
+      lista.appendChild(item);
+    }
+  }
+
+  // ── ADMIN: CADASTRAR CLIENTE + SENSORES ──
   async function cadastrarCliente() {
     const nome = document.getElementById('adm-nome').value.trim();
     const email = document.getElementById('adm-email').value.trim();
     const senha = document.getElementById('adm-senha').value.trim();
-    const dispNome = document.getElementById('adm-disp-nome').value.trim();
-    const dispLocal = document.getElementById('adm-disp-local').value.trim();
+    const qtd = parseInt(document.getElementById('adm-qtd').value) || 1;
     const btn = document.getElementById('btnCadastrar');
 
-    if (!nome || !email || !senha || !dispNome || !dispLocal) {
-      mostrarErro('erroAdminForm', 'Preencha todos os campos.');
+    if (!nome || !email || !senha) {
+      mostrarErro('erroAdminForm', 'Preencha os dados do cliente.');
       return;
+    }
+
+    // Coleta dados dos sensores
+    const sensores = [];
+    for (let i = 1; i <= qtd; i++) {
+      const sNome = document.getElementById(`adm-disp-nome-${i}`)?.value.trim();
+      const sLocal = document.getElementById(`adm-disp-local-${i}`)?.value.trim();
+      if (!sNome || !sLocal) {
+        mostrarErro('erroAdminForm', `Preencha os dados do Sensor ${i}.`);
+        return;
+      }
+      sensores.push({ nome: sNome, local: sLocal });
     }
 
     btn.disabled = true;
     btn.innerHTML = '<span class="loading"></span>Cadastrando...';
     document.getElementById('erroAdminForm').style.display = 'none';
     document.getElementById('sucessoAdmin').style.display = 'none';
-    document.getElementById('tokenGerado').style.display = 'none';
+    document.getElementById('tokensLista').style.display = 'none';
 
     try {
       const res = await fetch(`${API}/api/admin/cadastrar`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nome, email, senha, dispNome, dispLocal, adminSenha: ADMIN_SENHA })
+        body: JSON.stringify({ nome, email, senha, sensores, adminSenha: ADMIN_SENHA })
       });
 
       const data = await res.json();
@@ -335,31 +425,35 @@
       if (!res.ok) {
         mostrarErro('erroAdminForm', data.erro || 'Erro ao cadastrar.');
         btn.disabled = false;
-        btn.innerHTML = 'Cadastrar cliente e sensor';
+        btn.innerHTML = 'Cadastrar cliente e sensores';
         return;
       }
 
-      // Mostra token gerado
-      document.getElementById('tokenValor').textContent = data.token;
-      document.getElementById('tokenGerado').style.display = 'block';
+      // Mostra tokens gerados
+      const tokensEl = document.getElementById('tokensLista');
+      tokensEl.innerHTML = data.tokens.map((t, i) =>
+        `<div class="token-gerado">Sensor ${i+1} — <strong>${t.nome}</strong><br>Token: <span>${t.token}</span></div>`
+      ).join('');
+      tokensEl.style.display = 'flex';
 
-      // Mostra sucesso
       const s = document.getElementById('sucessoAdmin');
-      s.textContent = `✓ Cliente "${nome}" cadastrado com sucesso!`;
+      s.textContent = `✓ Cliente "${nome}" cadastrado com ${qtd} sensor(es)!`;
       s.style.display = 'block';
 
       // Limpa campos
-      ['adm-nome','adm-email','adm-senha','adm-disp-nome','adm-disp-local'].forEach(id => {
-        document.getElementById(id).value = '';
-      });
+      document.getElementById('adm-nome').value = '';
+      document.getElementById('adm-email').value = '';
+      document.getElementById('adm-senha').value = '';
+      document.getElementById('adm-qtd').value = '1';
+      gerarCamposSensores();
 
       btn.disabled = false;
-      btn.innerHTML = 'Cadastrar cliente e sensor';
+      btn.innerHTML = 'Cadastrar cliente e sensores';
 
     } catch (e) {
       mostrarErro('erroAdminForm', 'Não foi possível conectar ao servidor.');
       btn.disabled = false;
-      btn.innerHTML = 'Cadastrar cliente e sensor';
+      btn.innerHTML = 'Cadastrar cliente e sensores';
     }
   }
 
@@ -371,6 +465,7 @@
   }
 
   document.addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
+  gerarCamposSensores();
 </script>
 </body>
 </html>

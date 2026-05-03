@@ -179,57 +179,65 @@
   .detalhe-title{font-family:var(--font-head);font-size:1.2rem;font-weight:800}
   .detalhe-sub{font-size:.8rem;color:rgba(255,255,255,.4)}
   /* PERFIL REDESIGN */
-  .perfil-page { max-width: 600px; margin: 0 auto; }
+  .perfil-page { width: 100%; }
   .perfil-banner {
-    height: 130px;
+    height: 150px;
     background: linear-gradient(135deg, #0A1628 0%, #1B3461 50%, #1E6FD9 100%);
-    border-radius: 16px 16px 0 0;
     position: relative;
+    margin: -1.5rem -1.5rem 0 -1.5rem;
   }
   .perfil-avatar-wrap {
     position: absolute;
-    bottom: -40px;
+    bottom: -44px;
     left: 50%;
     transform: translateX(-50%);
   }
   .perfil-avatar-big {
-    width: 80px; height: 80px; border-radius: 50%;
+    width: 88px; height: 88px; border-radius: 50%;
     background: var(--blue);
     display: flex; align-items: center; justify-content: center;
-    font-family: var(--font-head); font-size: 2rem; font-weight: 800; color: #fff;
+    font-family: var(--font-head); font-size: 2.2rem; font-weight: 800; color: #fff;
     border: 4px solid #080F1C;
-    box-shadow: 0 4px 20px rgba(0,0,0,.4);
+    box-shadow: 0 4px 20px rgba(0,0,0,.5);
   }
   .perfil-info-center {
-    background: rgba(255,255,255,.03);
-    border: 1px solid rgba(255,255,255,.07);
-    border-top: none;
-    border-radius: 0 0 16px 16px;
-    padding: 3rem 2rem 1.5rem;
+    padding: 3.5rem 2rem 1.5rem;
     text-align: center;
     margin-bottom: 1.25rem;
+    border-bottom: 1px solid rgba(255,255,255,.06);
   }
   .perfil-info-center h2 {
-    font-family: var(--font-head); font-size: 1.3rem; font-weight: 800;
-    color: #fff; margin-bottom: .3rem;
+    font-family: var(--font-head); font-size: 1.4rem; font-weight: 800;
+    color: #fff; margin-bottom: .35rem;
   }
-  .perfil-info-center p { font-size: .85rem; color: rgba(255,255,255,.45); }
+  .perfil-info-center p { font-size: .88rem; color: rgba(255,255,255,.45); }
   .perfil-info-center .perfil-plano {
     display: inline-flex; align-items: center; gap: 5px;
     background: rgba(30,111,217,.12); border: 1px solid rgba(30,111,217,.25);
     color: #60a5fa; border-radius: 100px; padding: .25rem .85rem;
     font-size: .75rem; font-weight: 500; margin-top: .6rem;
   }
-  .perfil-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:1.25rem;margin-bottom:1rem}
-  .perfil-row{display:flex;align-items:center;justify-content:space-between;padding:.6rem 0;border-bottom:1px solid rgba(255,255,255,.05)}
-  .perfil-row:last-child{border-bottom:none}
-  .perfil-label{font-size:.75rem;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.06em}
-  .perfil-val{font-size:.9rem;color:rgba(255,255,255,.85);font-weight:500}
-  .perfil-section-title{font-family:var(--font-head);font-size:.85rem;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.75rem;margin-top:1.5rem}
-  .btn-perfil{display:inline-flex;align-items:center;gap:8px;background:rgba(30,111,217,.15);border:1px solid rgba(30,111,217,.3);color:#60a5fa;border-radius:8px;padding:.55rem 1.1rem;font-family:var(--font-body);font-size:.85rem;cursor:pointer;transition:background .2s;margin-top:.5rem}
-  .btn-perfil:hover{background:rgba(30,111,217,.25)}
-  .btn-danger{background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.25);color:#f87171}
-  .btn-danger:hover{background:rgba(239,68,68,.2)}
+  .perfil-acoes {
+    display: flex; flex-direction: column; align-items: center;
+    gap: .75rem; padding: 1.5rem 2rem;
+    max-width: 320px; margin: 0 auto;
+  }
+  .perfil-section-title {
+    font-family: var(--font-head); font-size: .8rem; font-weight: 700;
+    color: rgba(255,255,255,.35); text-transform: uppercase; letter-spacing: .08em;
+    margin-bottom: .5rem; text-align: center;
+  }
+  .btn-perfil {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%;
+    background: rgba(30,111,217,.15); border: 1px solid rgba(30,111,217,.3);
+    color: #60a5fa; border-radius: 10px; padding: .7rem 1.1rem;
+    font-family: var(--font-body); font-size: .88rem; cursor: pointer;
+    transition: background .2s;
+  }
+  .btn-perfil:hover { background: rgba(30,111,217,.25); }
+  .btn-danger { background: rgba(239,68,68,.1); border-color: rgba(239,68,68,.25); color: #f87171; }
+  .btn-danger:hover { background: rgba(239,68,68,.2); }
   .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:300;display:none;align-items:center;justify-content:center}
   .modal-overlay.open{display:flex}
   .modal-box{background:#112240;border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:1.75rem;width:100%;max-width:380px}
@@ -410,13 +418,11 @@
     <!-- PERFIL -->
     <div class="page" id="page-perfil">
       <div class="perfil-page">
-        <!-- Banner + Avatar -->
         <div class="perfil-banner">
           <div class="perfil-avatar-wrap">
             <div class="perfil-avatar-big" id="perfilAvatar">?</div>
           </div>
         </div>
-        <!-- Info centralizada -->
         <div class="perfil-info-center">
           <h2 id="perfilNome">--</h2>
           <p id="perfilEmail">--</p>
@@ -425,18 +431,18 @@
             ECHON Monitoramento
           </div>
         </div>
-        <!-- Segurança -->
-        <div class="perfil-section-title">Segurança</div>
-        <button class="btn-perfil" onclick="abrirModal()">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-          Trocar senha
-        </button>
-        <!-- Sessão -->
-        <div class="perfil-section-title">Sessão</div>
-        <button class="btn-perfil btn-danger" onclick="sair()">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-          Sair da conta
-        </button>
+        <div class="perfil-acoes">
+          <div class="perfil-section-title">Segurança</div>
+          <button class="btn-perfil" onclick="abrirModal()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Trocar senha
+          </button>
+          <div class="perfil-section-title" style="margin-top:.5rem">Sessão</div>
+          <button class="btn-perfil btn-danger" onclick="sair()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Sair da conta
+          </button>
+        </div>
       </div>
     </div>
 
@@ -447,6 +453,7 @@
 <script>
   const API = 'http://localhost:3000';
   let clienteObj=null, mainChart=null, detalheChart=null, dadosGlobais=null, medicaoAtiva=null;
+  let limiteAtual = { verde: 55, amarelo: 70, vermelho: 80, ambiente: 'Padrão' };
 
   window.addEventListener('DOMContentLoaded', async () => {
     const token = localStorage.getItem('echon_token');
@@ -463,6 +470,7 @@
     document.getElementById('perfilEmail').textContent = clienteObj.email || 'e-mail não informado';
     document.getElementById('greetingDate').textContent = new Date().toLocaleDateString('pt-BR', {weekday:'long',day:'numeric',month:'long',year:'numeric'});
     document.getElementById('topbarSub').textContent = 'Monitoramento em tempo real';
+    // Ambiente será atualizado após carregarDados
     await carregarDados();
     setTimeout(() => { document.getElementById('loadingOverlay').classList.add('hide'); document.body.classList.add('loaded'); }, 1400);
     setInterval(carregarDados, 10000);
@@ -487,6 +495,10 @@
       if (res.status === 401) { sair(); return; }
       const data = await res.json();
       dadosGlobais = data;
+      if (data.limites) {
+        limiteAtual = data.limites;
+        document.getElementById('topbarSub').textContent = `Ambiente: ${data.limites.ambiente} · Limite: ${data.limites.amarelo} dB`;
+      }
       renderizarDispositivos(data.dispositivos);
       renderizarMetrics(data.stats, data.alertas);
       renderizarHistoricoGrafico(data.medicoes);
@@ -501,6 +513,12 @@
     lista.forEach((d, i) => { const b = document.createElement('button'); b.className = 'device-btn' + (i===0?' active':''); b.textContent = `${d.nome} – ${d.local}`; c.appendChild(b); });
   }
 
+  function getStatus(val) {
+    if (val >= limiteAtual.vermelho) return { txt: '● Alto', cls: 'metric-badge badge-high' };
+    if (val >= limiteAtual.amarelo) return { txt: '● Moderado', cls: 'metric-badge badge-moderate' };
+    return { txt: '● Baixo', cls: 'metric-badge badge-low' };
+  }
+
   function renderizarMetrics(stats, alertas) {
     if (!stats || !stats.atual) return;
     const val = parseFloat(stats.atual);
@@ -508,10 +526,9 @@
     document.getElementById('mMedia').textContent = stats.media || '--';
     document.getElementById('mPico').textContent = stats.pico ? Math.round(stats.pico) : '--';
     document.getElementById('mAlertas').textContent = alertas ? alertas.length : 0;
+    const st = getStatus(val);
     const s = document.getElementById('mStatus');
-    if (val>=80) { s.textContent='● Alto'; s.className='metric-badge badge-high'; }
-    else if (val>=60) { s.textContent='● Moderado'; s.className='metric-badge badge-moderate'; }
-    else { s.textContent='● Baixo'; s.className='metric-badge badge-low'; }
+    s.textContent = st.txt; s.className = st.cls;
   }
 
   function renderizarHistoricoGrafico(medicoes) {
@@ -524,14 +541,14 @@
         type: 'line',
         data: { labels, datasets: [
           {label:'dB(A)', data:valores, borderColor:'#3B8EF3', backgroundColor:'rgba(59,142,243,.1)', borderWidth:2, fill:true, tension:.4, pointRadius:3, pointBackgroundColor:'#3B8EF3'},
-          {label:'Limite', data:Array(labels.length).fill(65), borderColor:'rgba(239,68,68,.5)', borderWidth:1.5, borderDash:[5,4], pointRadius:0, fill:false}
+          {label:'Limite', data:Array(labels.length).fill(limiteAtual.amarelo), borderColor:'rgba(239,68,68,.5)', borderWidth:1.5, borderDash:[5,4], pointRadius:0, fill:false}
         ]},
-        options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false}, tooltip:{backgroundColor:'#0F1E35',titleColor:'rgba(255,255,255,.5)',bodyColor:'#fff',padding:10,cornerRadius:8,displayColors:false,callbacks:{label:c=>c.datasetIndex===0?c.parsed.y.toFixed(1)+' dB(A)':'Limite: 65 dB'}} }, scales:{ x:{ticks:{color:'rgba(255,255,255,.3)',font:{size:10},maxRotation:0,autoSkip:true,maxTicksLimit:8},grid:{color:'rgba(255,255,255,.04)'}}, y:{min:25,max:95,ticks:{color:'rgba(255,255,255,.3)',font:{size:10},callback:v=>v+' dB'},grid:{color:'rgba(255,255,255,.05)'}} } }
+        options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false}, tooltip:{backgroundColor:'#0F1E35',titleColor:'rgba(255,255,255,.5)',bodyColor:'#fff',padding:10,cornerRadius:8,displayColors:false,callbacks:{label:c=>c.datasetIndex===0?c.parsed.y.toFixed(1)+' dB(A)':`Limite: ${limiteAtual.amarelo} dB (${limiteAtual.ambiente})`}} }, scales:{ x:{ticks:{color:'rgba(255,255,255,.3)',font:{size:10},maxRotation:0,autoSkip:true,maxTicksLimit:8},grid:{color:'rgba(255,255,255,.04)'}}, y:{min:25,max:95,ticks:{color:'rgba(255,255,255,.3)',font:{size:10},callback:v=>v+' dB'},grid:{color:'rgba(255,255,255,.05)'}} } }
       });
     } else {
       mainChart.data.labels = labels;
       mainChart.data.datasets[0].data = valores;
-      mainChart.data.datasets[1].data = Array(labels.length).fill(65);
+      mainChart.data.datasets[1].data = Array(labels.length).fill(limiteAtual.amarelo);
       mainChart.update('none');
     }
   }
@@ -560,8 +577,9 @@
       const vals = medicoes.map(m => parseFloat(m.db_valor));
       const media = (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1);
       const pico = Math.max(...vals).toFixed(1);
-      const sc = pico>=80?'badge-high':pico>=60?'badge-moderate':'badge-low';
-      const st = pico>=80?'Alto':pico>=60?'Moderado':'Baixo';
+      const stObj = getStatus(parseFloat(pico));
+      const sc = stObj.cls.replace('metric-badge ','');
+      const st = stObj.txt.replace('● ','');
       const id = 'mini-' + data.replace(/\//g,'-');
       const card = document.createElement('div');
       card.className = 'hist-card';
@@ -600,7 +618,7 @@
       type:'line',
       data:{labels, datasets:[
         {label:'dB(A)', data:lista.map(m=>parseFloat(m.db_valor)), borderColor:'#3B8EF3', backgroundColor:'rgba(59,142,243,.1)', borderWidth:2, fill:true, tension:.4, pointRadius:3},
-        {label:'Limite', data:Array(labels.length).fill(65), borderColor:'rgba(239,68,68,.5)', borderWidth:1.5, borderDash:[5,4], pointRadius:0, fill:false}
+        {label:'Limite', data:Array(labels.length).fill(limiteAtual.amarelo), borderColor:'rgba(239,68,68,.5)', borderWidth:1.5, borderDash:[5,4], pointRadius:0, fill:false}
       ]},
       options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{ticks:{color:'rgba(255,255,255,.3)',font:{size:10},maxRotation:0,autoSkip:true,maxTicksLimit:8},grid:{color:'rgba(255,255,255,.04)'}}, y:{min:25,max:95,ticks:{color:'rgba(255,255,255,.3)',font:{size:10},callback:v=>v+' dB'},grid:{color:'rgba(255,255,255,.05)'}}}}
     });
@@ -622,16 +640,50 @@
     a.href = url; a.download = nome; a.click(); URL.revokeObjectURL(url);
   }
 
-  function abrirModal() { document.getElementById('modalSenha').classList.add('open'); document.getElementById('modalMsg').className='modal-msg'; ['senhaAtual','senhaNova','senhaConfirm'].forEach(id => document.getElementById(id).value=''); }
+  function abrirModal() {
+    document.getElementById('modalSenha').classList.add('open');
+    document.getElementById('modalMsg').className='modal-msg';
+    ['senhaAtual','senhaNova','senhaConfirm'].forEach(id => document.getElementById(id).value='');
+  }
   function fecharModal() { document.getElementById('modalSenha').classList.remove('open'); }
-  function trocarSenha() {
-    const atual=document.getElementById('senhaAtual').value, nova=document.getElementById('senhaNova').value, conf=document.getElementById('senhaConfirm').value;
+  async function trocarSenha() {
+    const atual = document.getElementById('senhaAtual').value;
+    const nova = document.getElementById('senhaNova').value;
+    const conf = document.getElementById('senhaConfirm').value;
     const msg = document.getElementById('modalMsg');
+    const btn = document.querySelector('.modal-btn-save');
+
     if (!atual||!nova||!conf) { msg.textContent='Preencha todos os campos.'; msg.className='modal-msg err'; return; }
     if (nova!==conf) { msg.textContent='As senhas não coincidem.'; msg.className='modal-msg err'; return; }
     if (nova.length<6) { msg.textContent='A nova senha deve ter pelo menos 6 caracteres.'; msg.className='modal-msg err'; return; }
-    msg.textContent='Senha alterada com sucesso!'; msg.className='modal-msg ok';
-    setTimeout(() => fecharModal(), 1500);
+
+    btn.disabled = true;
+    btn.textContent = 'Salvando...';
+    msg.className = 'modal-msg';
+
+    try {
+      const token = localStorage.getItem('echon_token');
+      const res = await fetch(`${API}/api/cliente/trocar-senha`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ senhaAtual: atual, senhaNova: nova })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        msg.textContent = data.erro || 'Erro ao trocar senha.';
+        msg.className = 'modal-msg err';
+        btn.disabled = false; btn.textContent = 'Salvar';
+        return;
+      }
+      msg.textContent = 'Senha alterada com sucesso!';
+      msg.className = 'modal-msg ok';
+      btn.disabled = false; btn.textContent = 'Salvar';
+      setTimeout(() => fecharModal(), 1500);
+    } catch(e) {
+      msg.textContent = 'Não foi possível conectar ao servidor.';
+      msg.className = 'modal-msg err';
+      btn.disabled = false; btn.textContent = 'Salvar';
+    }
   }
 
   function renderizarSimulado() {
@@ -693,6 +745,7 @@
     document.getElementById('clientAvatar').textContent = inicial;
     document.getElementById('greetingDate').textContent = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
     document.getElementById('topbarSub').textContent = 'Monitoramento em tempo real';
+    // Ambiente será atualizado após carregarDados
 
     await carregarDados();
 

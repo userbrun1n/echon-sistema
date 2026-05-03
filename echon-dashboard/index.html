@@ -97,6 +97,45 @@
   input:focus { border-color: #1E6FD9; }
   input::placeholder { color: rgba(255,255,255,.2); }
 
+  select {
+    width: 100%;
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 10px;
+    padding: .75rem 1rem;
+    color: #fff;
+    font-family: 'DM Sans', sans-serif;
+    font-size: .95rem;
+    margin-bottom: 1.25rem;
+    transition: border-color .2s;
+    outline: none;
+    appearance: none;
+    cursor: pointer;
+  }
+  select:focus { border-color: #1E6FD9; }
+  select option { background: #112240; color: #fff; }
+
+  .custom-limites {
+    display: none;
+    background: rgba(255,255,255,.03);
+    border: 1px solid rgba(255,255,255,.07);
+    border-radius: 10px;
+    padding: .85rem;
+    margin-bottom: 1.25rem;
+  }
+  .custom-limites label { margin-top: .4rem; }
+  .custom-limites input { margin-bottom: .6rem; }
+  .custom-limites input:last-child { margin-bottom: 0; }
+  .limites-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: .6rem; }
+  .limites-row input { margin-bottom: 0; }
+  .limites-row .limite-label {
+    font-size: .68rem; text-align: center; margin-bottom: .3rem;
+    display: block;
+  }
+  .limite-verde { color: #4ade80; }
+  .limite-amarelo { color: #fbbf24; }
+  .limite-vermelho { color: #f87171; }
+
   .btn-login {
     width: 100%;
     background: #1E6FD9;
@@ -270,6 +309,33 @@
       <label>Senha de acesso</label>
       <input type="password" id="adm-senha" placeholder="Senha do cliente" />
 
+      <div class="admin-section-title">Ambiente</div>
+      <label>Tipo de ambiente</label>
+      <select id="adm-ambiente" onchange="toggleCustomLimites()">
+        <option value="1">Hospital/UTI</option>
+        <option value="2">Escola/Biblioteca</option>
+        <option value="3" selected>Escritório</option>
+        <option value="4">Cinema</option>
+        <option value="0">Outro (personalizar limites)</option>
+      </select>
+      <div class="custom-limites" id="customLimites">
+        <div style="font-size:.72rem;color:rgba(255,255,255,.4);margin-bottom:.75rem">Defina os limites de ruído em dB:</div>
+        <div class="limites-row">
+          <div>
+            <span class="limite-label limite-verde">🟢 Verde (ok)</span>
+            <input type="number" id="adm-limite-verde" placeholder="Ex: 55" min="0" max="150" style="margin-bottom:0;text-align:center" />
+          </div>
+          <div>
+            <span class="limite-label limite-amarelo">🟡 Amarelo (alerta)</span>
+            <input type="number" id="adm-limite-amarelo" placeholder="Ex: 70" min="0" max="150" style="margin-bottom:0;text-align:center" />
+          </div>
+          <div>
+            <span class="limite-label limite-vermelho">🔴 Vermelho (crítico)</span>
+            <input type="number" id="adm-limite-vermelho" placeholder="Ex: 80" min="0" max="150" style="margin-bottom:0;text-align:center" />
+          </div>
+        </div>
+      </div>
+
       <div class="admin-section-title">Sensores</div>
       <div class="qtd-sensores-row">
         <label>Quantos sensores?</label>
@@ -388,11 +454,24 @@
     const email = document.getElementById('adm-email').value.trim();
     const senha = document.getElementById('adm-senha').value.trim();
     const qtd = parseInt(document.getElementById('adm-qtd').value) || 1;
+    const ambienteId = parseInt(document.getElementById('adm-ambiente').value);
     const btn = document.getElementById('btnCadastrar');
 
     if (!nome || !email || !senha) {
       mostrarErro('erroAdminForm', 'Preencha os dados do cliente.');
       return;
+    }
+
+    // Valida limites customizados
+    let limiteVerde = null, limiteAmarelo = null, limiteVermelho = null;
+    if (ambienteId === 0) {
+      limiteVerde = parseFloat(document.getElementById('adm-limite-verde').value);
+      limiteAmarelo = parseFloat(document.getElementById('adm-limite-amarelo').value);
+      limiteVermelho = parseFloat(document.getElementById('adm-limite-vermelho').value);
+      if (!limiteVerde || !limiteAmarelo || !limiteVermelho) {
+        mostrarErro('erroAdminForm', 'Preencha todos os limites de ruído.');
+        return;
+      }
     }
 
     // Coleta dados dos sensores
@@ -417,7 +496,7 @@
       const res = await fetch(`${API}/api/admin/cadastrar`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nome, email, senha, sensores, adminSenha: ADMIN_SENHA })
+        body: JSON.stringify({ nome, email, senha, sensores, adminSenha: ADMIN_SENHA, ambienteId: ambienteId || 3, limiteVerde, limiteAmarelo, limiteVermelho })
       });
 
       const data = await res.json();
@@ -455,6 +534,12 @@
       btn.disabled = false;
       btn.innerHTML = 'Cadastrar cliente e sensores';
     }
+  }
+
+  // ── TOGGLE CUSTOM LIMITES ──
+  function toggleCustomLimites() {
+    const val = document.getElementById('adm-ambiente').value;
+    document.getElementById('customLimites').style.display = val === '0' ? 'block' : 'none';
   }
 
   // ── HELPERS ──

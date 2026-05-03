@@ -841,6 +841,7 @@
       if (res.status === 401) { sair(); return; }
 
       const data = await res.json();
+      dadosGlobais = data;
       renderizarDispositivos(data.dispositivos);
       renderizarMetrics(data.stats, data.alertas);
       renderizarHistorico(data.medicoes);

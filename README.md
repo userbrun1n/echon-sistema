@@ -1,7 +1,7 @@
 # 🔊 ECHON — Sistema de Monitoramento de Ruído e Stress Acústico
 
 <p align="center">
-  <img src="echon-dashboard/Logo_W.png" alt="ECHON Logo" width="160"/>
+  <img src="docs/Logo_W.png" alt="ECHON Logo" width="160"/>
 </p>
 
 <p align="center">

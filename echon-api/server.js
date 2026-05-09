@@ -52,19 +52,6 @@ app.post('/api/login', async (req, res) => {
     if (rows.length === 0) return res.status(401).json({ erro: 'Email ou senha incorretos' });
     const cliente = rows[0];
     const token = jwt.sign({ id: cliente.id, nome: cliente.nome }, SECRET, { expiresIn: '8h' });
-    // Busca thresholds do ambiente do cliente
-    let limites = { verde: 55, amarelo: 70, vermelho: 70, ambiente: 'Padrão' };
-    if (cliente.ambiente_id) {
-      const [amb] = await db.query('SELECT * FROM ambientes WHERE id = ?', [cliente.ambiente_id]);
-      if (amb.length > 0) {
-        limites = {
-          verde: parseFloat(cliente.limite_verde || amb[0].limite_verde),
-          amarelo: parseFloat(cliente.limite_amarelo || amb[0].limite_amarelo),
-          vermelho: parseFloat(cliente.limite_vermelho || amb[0].limite_vermelho),
-          ambiente: amb[0].nome
-        };
-      }
-    }
     res.json({
       token,
       cliente: {
@@ -72,8 +59,7 @@ app.post('/api/login', async (req, res) => {
         nome: cliente.nome,
         email: cliente.email,
         cor_primaria: cliente.cor_primaria,
-        logo_url: cliente.logo_url,
-        limites
+        logo_url: cliente.logo_url
       }
     });
   } catch (e) {
@@ -102,15 +88,10 @@ app.post('/api/admin/cadastrar', async (req, res) => {
       return res.status(400).json({ erro: 'Este e-mail já está cadastrado' });
     }
 
-    // Insere cliente com ambiente
-    const ambienteId = req.body.ambienteId || 3;
-    const limiteVerde = req.body.limiteVerde || null;
-    const limiteAmarelo = req.body.limiteAmarelo || null;
-    const limiteVermelho = req.body.limiteVermelho || null;
-
+    // Insere cliente
     const [resultado] = await db.query(
-      'INSERT INTO clientes (nome, email, senha, ambiente_id, limite_verde, limite_amarelo, limite_vermelho) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [nome, email, senha, ambienteId, limiteVerde, limiteAmarelo, limiteVermelho]
+      'INSERT INTO clientes (nome, email, senha) VALUES (?, ?, ?)',
+      [nome, email, senha]
     );
     const clienteId = resultado.insertId;
 
@@ -178,43 +159,57 @@ app.post('/api/cliente/trocar-senha', auth, async (req, res) => {
 });
 
 
-// LISTAR AMBIENTES (para dropdown no admin)
-app.get('/api/ambientes', async (req, res) => {
+// ADMIN: LISTAR TODOS OS CLIENTES
+app.get('/api/admin/clientes', auth, async (req, res) => {
   try {
-    const [rows] = await db.query('SELECT * FROM ambientes ORDER BY id');
-    res.json(rows);
+    const [clientes] = await db.query(
+      `SELECT c.id, c.nome, c.email, c.criado_em,
+              a.nome as ambiente,
+              COUNT(d.id) as total_sensores
+       FROM clientes c
+       LEFT JOIN ambientes a ON a.id = c.ambiente_id
+       LEFT JOIN dispositivos d ON d.cliente_id = c.id
+       GROUP BY c.id
+       ORDER BY c.criado_em DESC`
+    );
+    res.json(clientes);
   } catch (e) {
-    res.status(500).json({ erro: 'Erro ao buscar ambientes' });
+    console.error(e);
+    res.status(500).json({ erro: 'Erro ao buscar clientes' });
   }
 });
 
-// PARAMETROS PARA ESP32
-app.get('/api/parametros/:token', async (req, res) => {
+
+// ADMIN: DESATIVAR CLIENTE (todos os sensores)
+app.post('/api/admin/cliente/:id/desativar', async (req, res) => {
   try {
-    const { token } = req.params;
-    const [disp] = await db.query(
-      `SELECT d.*, c.ambiente_id, c.limite_verde, c.limite_amarelo, c.limite_vermelho,
-              a.nome as ambiente_nome, a.limite_verde as amb_verde,
-              a.limite_amarelo as amb_amarelo, a.limite_vermelho as amb_vermelho
-       FROM dispositivos d
-       JOIN clientes c ON c.id = d.cliente_id
-       LEFT JOIN ambientes a ON a.id = c.ambiente_id
-       WHERE d.token = ? AND d.ativo = 1`,
-      [token]
+    const { adminSenha } = req.body;
+    if (adminSenha !== ADMIN_SENHA) return res.status(401).json({ erro: 'Senha incorreta' });
+    await db.query('UPDATE dispositivos SET ativo = 0 WHERE cliente_id = ?', [req.params.id]);
+    res.json({ sucesso: true, mensagem: 'Cliente desativado' });
+  } catch (e) { res.status(500).json({ erro: 'Erro ao desativar' }); }
+});
+
+// ADMIN: REATIVAR CLIENTE (todos os sensores)
+app.post('/api/admin/cliente/:id/reativar', async (req, res) => {
+  try {
+    const { adminSenha } = req.body;
+    if (adminSenha !== ADMIN_SENHA) return res.status(401).json({ erro: 'Senha incorreta' });
+    await db.query('UPDATE dispositivos SET ativo = 1 WHERE cliente_id = ?', [req.params.id]);
+    res.json({ sucesso: true, mensagem: 'Cliente reativado' });
+  } catch (e) { res.status(500).json({ erro: 'Erro ao reativar' }); }
+});
+
+// ADMIN: STATUS DOS SENSORES DO CLIENTE
+app.get('/api/admin/cliente/:id/status', async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      'SELECT COUNT(*) as total, SUM(ativo) as ativos FROM dispositivos WHERE cliente_id = ?',
+      [req.params.id]
     );
-    if (disp.length === 0) return res.status(404).json({ erro: 'Dispositivo não encontrado' });
-    const d = disp[0];
-    res.json({
-      dispositivo: d.nome,
-      local: d.local,
-      ambiente: d.ambiente_nome || 'Padrão',
-      verde: parseFloat(d.limite_verde || d.amb_verde || 55),
-      amarelo: parseFloat(d.limite_amarelo || d.amb_amarelo || 70),
-      vermelho: parseFloat(d.limite_vermelho || d.amb_vermelho || 80)
-    });
-  } catch (e) {
-    res.status(500).json({ erro: 'Erro ao buscar parâmetros' });
-  }
+    const ativo = rows[0].ativos > 0;
+    res.json({ ativo, total: rows[0].total, ativos: rows[0].ativos });
+  } catch (e) { res.status(500).json({ erro: 'Erro ao buscar status' }); }
 });
 
 // DADOS DO DASHBOARD
@@ -244,7 +239,9 @@ app.get('/api/dashboard', auth, async (req, res) => {
     );
 
     const [alertas] = await db.query(
-      `SELECT a.*, d.nome as dispositivo_nome
+      `SELECT a.*,
+              DATE_FORMAT(CONVERT_TZ(a.registrado_em, '+00:00', '-03:00'), '%Y-%m-%dT%H:%i:%s') as registrado_em,
+              d.nome as dispositivo_nome
        FROM alertas a
        JOIN dispositivos d ON d.id = a.dispositivo_id
        WHERE a.dispositivo_id IN (?)
@@ -265,23 +262,7 @@ app.get('/api/dashboard', auth, async (req, res) => {
       [ids, ids]
     );
 
-    // Busca ambiente do cliente
-    const [clienteAmb] = await db.query(
-      `SELECT c.limite_verde, c.limite_amarelo, c.limite_vermelho,
-              a.nome as ambiente_nome, a.limite_verde as amb_verde,
-              a.limite_amarelo as amb_amarelo, a.limite_vermelho as amb_vermelho
-       FROM clientes c LEFT JOIN ambientes a ON a.id = c.ambiente_id
-       WHERE c.id = ?`, [clienteId]
-    );
-    const ca = clienteAmb[0] || {};
-    const limites = {
-      verde: parseFloat(ca.limite_verde || ca.amb_verde || 55),
-      amarelo: parseFloat(ca.limite_amarelo || ca.amb_amarelo || 70),
-      vermelho: parseFloat(ca.limite_vermelho || ca.amb_vermelho || 80),
-      ambiente: ca.ambiente_nome || 'Padrão'
-    };
-
-    res.json({ dispositivos, medicoes, alertas, stats: stats[0], limites });
+    res.json({ dispositivos, medicoes, alertas, stats: stats[0] });
   } catch (e) {
     console.error(e);
     res.status(500).json({ erro: 'Erro ao buscar dados' });
@@ -304,23 +285,10 @@ app.post('/api/medicao', async (req, res) => {
       [dispositivo.id, db_valor]
     );
 
-    // Busca thresholds do cliente dono do dispositivo
-    const [clienteInfo] = await db.query(
-      `SELECT c.ambiente_id, c.limite_verde, c.limite_amarelo, c.limite_vermelho,
-              a.limite_verde as amb_verde, a.limite_amarelo as amb_amarelo, a.limite_vermelho as amb_vermelho
-       FROM clientes c
-       LEFT JOIN ambientes a ON a.id = c.ambiente_id
-       WHERE c.id = ?`,
-      [dispositivo.cliente_id]
-    );
-    const ci = clienteInfo[0] || {};
-    const limAmarel = parseFloat(ci.limite_amarelo || ci.amb_amarelo || 65);
-    const limVerm = parseFloat(ci.limite_vermelho || ci.amb_vermelho || 80);
-
     let tipo = null;
     let mensagem = null;
-    if (db_valor >= limVerm) { tipo = 'alto'; mensagem = `Ruído crítico de ${db_valor} dB detectado`; }
-    else if (db_valor >= limAmarel) { tipo = 'moderado'; mensagem = `Ruído elevado de ${db_valor} dB detectado`; }
+    if (db_valor >= 80) { tipo = 'alto'; mensagem = `Ruído crítico de ${db_valor} dB detectado`; }
+    else if (db_valor >= 65) { tipo = 'moderado'; mensagem = `Ruído elevado de ${db_valor} dB detectado`; }
 
     if (tipo) {
       await db.query(

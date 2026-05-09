@@ -405,7 +405,13 @@
 
       localStorage.setItem('echon_token', data.token);
       localStorage.setItem('echon_cliente', JSON.stringify(data.cliente));
-      window.location.replace('dashboard.html');
+      // Admin vai para painel próprio
+      if (data.cliente.email === 'adm@echon.app') {
+        sessionStorage.setItem('echon_admin', '1');
+        window.location.replace('admin.html');
+      } else {
+        window.location.replace('dashboard.html');
+      }
 
     } catch (e) {
       mostrarErro('erroMsg', 'Não foi possível conectar ao servidor.');

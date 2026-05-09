@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ECHON – Painel Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Raleway:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #0A1628; --navy-mid: #112240; --navy-light: #1B3461;
+    --blue: #1E6FD9; --cyan: #00C7BE; --green: #22C55E;
+    --yellow: #F59E0B; --red: #EF4444;
+    --font-head: 'Raleway', sans-serif; --font-body: 'DM Sans', sans-serif;
+    --sidebar-w: 60px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font-body); background: #080F1C; color: #fff; min-height: 100vh; display: flex; opacity: 0; transition: opacity .4s; }
+  body.loaded { opacity: 1; }
+
+  /* LOADING */
+  .loading-overlay { position: fixed; inset: 0; z-index: 200; background: #080F1C; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 1rem; transition: opacity .4s; }
+  .loading-overlay.hide { opacity: 0; pointer-events: none; }
+  .loading-logo { font-family: var(--font-head); font-size: 2rem; font-weight: 800; color: #fff; letter-spacing: -1px; }
+  .loading-logo span { color: var(--cyan); }
+  .loading-bar { width: 120px; height: 2px; background: rgba(255,255,255,.1); border-radius: 2px; overflow: hidden; }
+  .loading-bar-fill { height: 100%; background: var(--cyan); border-radius: 2px; animation: load 1.2s ease forwards; }
+  @keyframes load { from{width:0} to{width:100%} }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+
+  /* SIDEBAR */
+  .sidebar { width: var(--sidebar-w); background: var(--navy-mid); border-right: 1px solid rgba(255,255,255,.06); display: flex; flex-direction: column; align-items: center; padding: 1.25rem 0; gap: .75rem; position: fixed; top: 0; left: 0; bottom: 0; z-index: 50; }
+  .sb-logo { width: 100%; display: flex; justify-content: center; align-items: center; margin-bottom: 0; padding: 0 5px; }
+  .sidebar-img { max-width: 50px; height: auto; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,.2)); }
+  .sb-divider { width: 30px; height: 1px; background: rgba(255,255,255,.08); }
+  .sb-icon { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background .2s; position: relative; }
+  .sb-icon:hover { background: rgba(255,255,255,.08); }
+  .sb-icon.active { background: var(--blue); }
+  .sb-icon svg { width: 18px; height: 18px; stroke: rgba(255,255,255,.45); }
+  .sb-icon.active svg { stroke: #fff; }
+  .sb-tooltip { position: absolute; left: 52px; background: #1B3461; color: #fff; font-size: .75rem; padding: 4px 10px; border-radius: 6px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity .15s; z-index: 100; }
+  .sb-icon:hover .sb-tooltip { opacity: 1; }
+  .sb-logout { margin-top: auto; width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background .2s; }
+  .sb-logout:hover { background: rgba(239,68,68,.15); }
+  .sb-logout svg { width: 18px; height: 18px; stroke: rgba(255,255,255,.3); }
+  .sb-logout:hover svg { stroke: #f87171; }
+
+  /* MAIN */
+  .main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+  .topbar { background: var(--navy-mid); border-bottom: 1px solid rgba(255,255,255,.06); padding: 0 1.5rem; height: 60px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 40; }
+  .topbar-left { display: flex; align-items: center; gap: 1rem; }
+  .topbar-title { font-family: var(--font-head); font-size: 1rem; font-weight: 700; color: rgba(255,255,255,.9); }
+  .topbar-sub { font-size: .78rem; color: rgba(255,255,255,.35); }
+  .admin-badge-top { display: flex; align-items: center; gap: 6px; background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.2); color: #f87171; padding: .25rem .75rem; border-radius: 100px; font-size: .75rem; font-weight: 500; }
+  .topbar-right { display: flex; align-items: center; gap: 1rem; }
+  .client-chip { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08); border-radius: 100px; padding: .3rem .9rem .3rem .4rem; }
+  .client-avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--red); display: flex; align-items: center; justify-content: center; font-family: var(--font-head); font-size: .7rem; font-weight: 700; color: #fff; }
+  .client-name { font-size: .82rem; color: rgba(255,255,255,.7); font-weight: 500; }
+
+  /* CONTENT */
+  .content { padding: 1.5rem; flex: 1; }
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* STATS CARDS */
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.5rem; animation: fadeUp .5s ease both; }
+  .stat-card { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.07); border-radius: 14px; padding: 1.1rem; position: relative; overflow: hidden; }
+  .stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; border-radius: 2px 2px 0 0; }
+  .sc-blue::before { background: var(--blue); }
+  .sc-green::before { background: var(--green); }
+  .sc-yellow::before { background: var(--yellow); }
+  .sc-red::before { background: var(--red); }
+  .stat-label { font-size: .7rem; color: rgba(255,255,255,.4); text-transform: uppercase; letter-spacing: .07em; margin-bottom: .4rem; }
+  .stat-val { font-family: var(--font-head); font-size: 2rem; font-weight: 700; color: #fff; line-height: 1; }
+  .stat-sub { font-size: .78rem; color: rgba(255,255,255,.35); margin-top: .25rem; }
+
+  /* CLIENTES TABLE */
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; animation: fadeUp .5s .1s ease both; }
+  .section-title { font-family: var(--font-head); font-size: 1.1rem; font-weight: 800; }
+  .btn-novo { display: inline-flex; align-items: center; gap: 6px; background: var(--blue); color: #fff; border: none; border-radius: 8px; padding: .55rem 1.1rem; font-family: var(--font-body); font-size: .85rem; cursor: pointer; transition: background .2s; }
+  .btn-novo:hover { background: #1a5fc5; }
+
+  .panel { background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.06); border-radius: 14px; padding: 1.1rem; animation: fadeUp .5s .15s ease both; overflow-x: auto; }
+
+  .admin-table { width: 100%; border-collapse: collapse; }
+  .admin-table th { font-size: .72rem; color: rgba(255,255,255,.4); text-transform: uppercase; letter-spacing: .06em; padding: .6rem .75rem; text-align: left; border-bottom: 1px solid rgba(255,255,255,.06); white-space: nowrap; }
+  .admin-table td { font-size: .85rem; color: rgba(255,255,255,.75); padding: .75rem; border-bottom: 1px solid rgba(255,255,255,.04); vertical-align: middle; }
+  .admin-table tr:hover td { background: rgba(255,255,255,.02); }
+  .admin-table tr:last-child td { border-bottom: none; }
+
+  .status-chip { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 6px; font-size: .72rem; font-weight: 600; }
+  .chip-ativo { background: rgba(34,197,94,.12); color: #4ade80; }
+  .chip-inativo { background: rgba(239,68,68,.12); color: #f87171; }
+  .chip-amb { background: rgba(30,111,217,.12); color: #60a5fa; }
+
+  .btn-toggle { padding: .35rem .85rem; border-radius: 7px; font-family: var(--font-body); font-size: .78rem; font-weight: 500; cursor: pointer; border: none; transition: background .2s, opacity .2s; }
+  .btn-desativar { background: rgba(239,68,68,.12); color: #f87171; border: 1px solid rgba(239,68,68,.25); }
+  .btn-desativar:hover { background: rgba(239,68,68,.22); }
+  .btn-ativar { background: rgba(34,197,94,.12); color: #4ade80; border: 1px solid rgba(34,197,94,.25); }
+  .btn-ativar:hover { background: rgba(34,197,94,.22); }
+  .btn-toggle:disabled { opacity: .5; cursor: not-allowed; }
+
+  .no-data { text-align: center; padding: 3rem; color: rgba(255,255,255,.3); font-size: .85rem; }
+  .spinner-sm { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,.2); border-top-color: #fff; border-radius: 50%; animation: spin .6s linear infinite; vertical-align: middle; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* TOAST */
+  .toast { position: fixed; bottom: 1.5rem; right: 1.5rem; background: #1B3461; border: 1px solid rgba(255,255,255,.1); border-radius: 10px; padding: .75rem 1.25rem; font-size: .85rem; color: #fff; z-index: 999; transform: translateY(20px); opacity: 0; transition: all .3s; pointer-events: none; }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.ok { border-left: 3px solid var(--green); }
+  .toast.err { border-left: 3px solid var(--red); }
+
+  /* CADASTRO PAGE */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; max-width: 700px; }
+  .form-group { display: flex; flex-direction: column; gap: .4rem; }
+  .form-group.full { grid-column: 1 / -1; }
+  .form-label { font-size: .75rem; color: rgba(255,255,255,.45); text-transform: uppercase; letter-spacing: .05em; }
+  .form-input { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1); border-radius: 10px; padding: .7rem 1rem; color: #fff; font-family: var(--font-body); font-size: .9rem; outline: none; transition: border-color .2s; }
+  .form-input:focus { border-color: var(--blue); }
+  .form-input::placeholder { color: rgba(255,255,255,.2); }
+  select.form-input { appearance: none; cursor: pointer; }
+  select.form-input option { background: #112240; }
+
+  .sensores-container { display: flex; flex-direction: column; gap: .75rem; margin-top: .5rem; }
+  .sensor-row { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.07); border-radius: 10px; padding: .85rem; }
+  .sensor-row-title { font-size: .72rem; color: rgba(255,255,255,.35); text-transform: uppercase; letter-spacing: .06em; grid-column: 1/-1; margin-bottom: -.25rem; }
+
+  .custom-limites { display: none; grid-column: 1/-1; background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.07); border-radius: 10px; padding: .85rem; }
+  .limites-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: .75rem; }
+  .limite-label { font-size: .72rem; text-align: center; margin-bottom: .3rem; display: block; }
+  .limite-verde { color: #4ade80; }
+  .limite-amarelo { color: #fbbf24; }
+  .limite-vermelho { color: #f87171; }
+
+  .token-resultado { display: none; background: rgba(0,199,190,.08); border: 1px solid rgba(0,199,190,.2); border-radius: 10px; padding: 1rem; margin-top: 1rem; }
+  .token-resultado h4 { font-family: var(--font-head); font-size: .85rem; color: var(--cyan); margin-bottom: .5rem; }
+  .token-item { font-size: .82rem; color: rgba(255,255,255,.7); padding: .3rem 0; border-bottom: 1px solid rgba(255,255,255,.05); }
+  .token-item:last-child { border-bottom: none; }
+  .token-item strong { color: var(--cyan); font-family: monospace; font-size: .85rem; }
+
+  .form-actions { display: flex; gap: .75rem; margin-top: 1.5rem; }
+  .btn-salvar { background: var(--blue); color: #fff; border: none; border-radius: 10px; padding: .75rem 1.5rem; font-family: var(--font-body); font-size: .9rem; font-weight: 500; cursor: pointer; transition: background .2s; }
+  .btn-salvar:hover { background: #1a5fc5; }
+  .btn-salvar:disabled { opacity: .6; cursor: not-allowed; }
+  .btn-cancelar { background: rgba(255,255,255,.06); color: rgba(255,255,255,.6); border: 1px solid rgba(255,255,255,.1); border-radius: 10px; padding: .75rem 1.5rem; font-family: var(--font-body); font-size: .9rem; cursor: pointer; transition: background .2s; }
+  .btn-cancelar:hover { background: rgba(255,255,255,.1); }
+
+  .qtd-row { display: flex; align-items: center; gap: .75rem; }
+  .qtd-input { width: 70px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1); border-radius: 10px; padding: .6rem .75rem; color: #fff; font-family: var(--font-body); font-size: .9rem; text-align: center; outline: none; }
+  .btn-confirmar-qtd { background: rgba(30,111,217,.15); border: 1px solid rgba(30,111,217,.3); color: #60a5fa; border-radius: 8px; padding: .5rem .85rem; font-family: var(--font-body); font-size: .82rem; cursor: pointer; transition: background .2s; }
+  .btn-confirmar-qtd:hover { background: rgba(30,111,217,.25); }
+
+  @media (max-width: 768px) {
+    .sidebar { width: 100%; height: 56px; flex-direction: row; justify-content: space-around; top: auto; bottom: 0; left: 0; right: 0; border-right: none; border-top: 1px solid rgba(255,255,255,.06); padding: 0 1rem; gap: 0; }
+    .sb-logo { display: none; }
+    .sb-divider { display: none; }
+    .sb-logout { margin-top: 0; }
+    .main { margin-left: 0; padding-bottom: 56px; }
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .form-grid { grid-template-columns: 1fr; }
+    .sensor-row { grid-template-columns: 1fr; }
+    .limites-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-logo">ECHO<span>N</span></div>
+  <div class="loading-bar"><div class="loading-bar-fill"></div></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="sidebar">
+  <div class="sb-logo"><img src="Logo_W.png" class="sidebar-img" alt="Logo"></div>
+  <div class="sb-divider"></div>
+  <div class="sb-icon active" id="sbClientes" onclick="showPage('clientes')">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    <span class="sb-tooltip">Clientes</span>
+  </div>
+  <div class="sb-icon" id="sbCadastro" onclick="showPage('cadastro')">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    <span class="sb-tooltip">Novo Cliente</span>
+  </div>
+  <div class="sb-logout" onclick="sair()">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+  </div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div>
+        <div class="topbar-title" id="topbarTitle">Painel Administrativo</div>
+        <div class="topbar-sub">ECHON · Gestão de Clientes</div>
+      </div>
+      <div class="admin-badge-top">⚙ Admin</div>
+    </div>
+    <div class="topbar-right">
+      <div class="client-chip">
+        <div class="client-avatar">A</div>
+        <div class="client-name">Administrador</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- CLIENTES -->
+    <div class="page active" id="page-clientes">
+      <div class="stats-grid">
+        <div class="stat-card sc-blue"><div class="stat-label">Total de Clientes</div><div class="stat-val" id="statTotal">--</div><div class="stat-sub">cadastrados</div></div>
+        <div class="stat-card sc-green"><div class="stat-label">Clientes Ativos</div><div class="stat-val" id="statAtivos">--</div><div class="stat-sub">com sensores ligados</div></div>
+        <div class="stat-card sc-red"><div class="stat-label">Clientes Inativos</div><div class="stat-val" id="statInativos">--</div><div class="stat-sub">sensores desativados</div></div>
+        <div class="stat-card sc-yellow"><div class="stat-label">Total de Sensores</div><div class="stat-val" id="statSensores">--</div><div class="stat-sub">dispositivos</div></div>
+      </div>
+
+      <div class="section-header">
+        <div class="section-title">Clientes Cadastrados</div>
+        <button class="btn-novo" onclick="showPage('cadastro')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Novo Cliente
+        </button>
+      </div>
+
+      <div class="panel">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Nome</th>
+              <th>E-mail</th>
+              <th>Ambiente</th>
+              <th>Sensores</th>
+              <th>Status</th>
+              <th>Cadastro</th>
+              <th>Ação</th>
+            </tr>
+          </thead>
+          <tbody id="clientesTableBody">
+            <tr><td colspan="8" class="no-data">Carregando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- CADASTRO -->
+    <div class="page" id="page-cadastro">
+      <div class="section-header">
+        <div class="section-title">Novo Cliente</div>
+      </div>
+
+      <div class="panel" style="max-width:700px">
+        <div id="cadastroSucesso" style="display:none;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:8px;padding:.75rem 1rem;font-size:.85rem;color:#4ade80;margin-bottom:1rem"></div>
+        <div id="cadastroErro" style="display:none;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:.75rem 1rem;font-size:.85rem;color:#f87171;margin-bottom:1rem"></div>
+
+        <div class="form-grid">
+          <div class="form-group"><label class="form-label">Nome da empresa</label><input type="text" class="form-input" id="cNome" placeholder="Ex: Senac"></div>
+          <div class="form-group"><label class="form-label">E-mail de acesso</label><input type="email" class="form-input" id="cEmail" placeholder="cliente@empresa.com"></div>
+          <div class="form-group"><label class="form-label">Senha de acesso</label><input type="password" class="form-input" id="cSenha" placeholder="Mínimo 6 caracteres"></div>
+          <div class="form-group">
+            <label class="form-label">Tipo de ambiente</label>
+            <select class="form-input" id="cAmbiente" onchange="toggleCustomLimites()">
+              <option value="1">Hospital/UTI</option>
+              <option value="2">Escola/Biblioteca</option>
+              <option value="3" selected>Escritório</option>
+              <option value="4">Cinema</option>
+              <option value="0">Outro (personalizar)</option>
+            </select>
+          </div>
+          <div class="custom-limites" id="customLimites">
+            <div style="font-size:.72rem;color:rgba(255,255,255,.4);margin-bottom:.75rem">Limites de ruído em dB:</div>
+            <div class="limites-row">
+              <div><span class="limite-label limite-verde">🟢 Verde (ok)</span><input type="number" class="form-input" id="cLimVerde" placeholder="55" min="0" max="150" style="text-align:center"></div>
+              <div><span class="limite-label limite-amarelo">🟡 Amarelo (alerta)</span><input type="number" class="form-input" id="cLimAmarelo" placeholder="70" min="0" max="150" style="text-align:center"></div>
+              <div><span class="limite-label limite-vermelho">🔴 Vermelho (crítico)</span><input type="number" class="form-input" id="cLimVermelho" placeholder="80" min="0" max="150" style="text-align:center"></div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:1.25rem">
+          <label class="form-label">Quantos sensores?</label>
+          <div class="qtd-row" style="margin-top:.4rem">
+            <input type="number" class="qtd-input" id="cQtd" min="1" max="10" value="1">
+            <button class="btn-confirmar-qtd" onclick="gerarCamposSensores()">Confirmar</button>
+          </div>
+        </div>
+
+        <div class="sensores-container" id="sensoresContainer" style="margin-top:1rem">
+          <div class="sensor-row">
+            <div class="sensor-row-title">Sensor 1</div>
+            <div class="form-group"><label class="form-label">Nome</label><input type="text" class="form-input" id="sNome1" placeholder="Ex: Sensor Sala 1"></div>
+            <div class="form-group"><label class="form-label">Local</label><input type="text" class="form-input" id="sLocal1" placeholder="Ex: Corredor principal"></div>
+          </div>
+        </div>
+
+        <div class="token-resultado" id="tokenResultado"></div>
+
+        <div class="form-actions">
+          <button class="btn-salvar" id="btnSalvar" onclick="cadastrarCliente()">Cadastrar cliente</button>
+          <button class="btn-cancelar" onclick="showPage('clientes')">Cancelar</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const API = 'https://echon-api.onrender.com';
+  const ADMIN_SENHA = 'YxTLA8jJxwpv3Ux';
+
+  // Verifica acesso
+  window.addEventListener('DOMContentLoaded', async () => {
+    const adminOk = sessionStorage.getItem('echon_admin');
+    if (!adminOk) { window.location.replace('index.html'); return; }
+    await carregarClientes();
+    setTimeout(() => { document.getElementById('loadingOverlay').classList.add('hide'); document.body.classList.add('loaded'); }, 1000);
+  });
+
+  function showPage(page) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.sb-icon').forEach(i => i.classList.remove('active'));
+    document.getElementById('page-' + page).classList.add('active');
+    const titles = { clientes: 'Painel Administrativo', cadastro: 'Novo Cliente' };
+    document.getElementById('topbarTitle').textContent = titles[page] || '';
+    if (page === 'clientes') { document.getElementById('sbClientes').classList.add('active'); carregarClientes(); }
+    if (page === 'cadastro') { document.getElementById('sbCadastro').classList.add('active'); limparCadastro(); }
+  }
+
+  async function carregarClientes() {
+    try {
+      const res = await fetch(`${API}/api/admin/clientes?adminSenha=${encodeURIComponent(ADMIN_SENHA)}`);
+      const clientes = await res.json();
+
+      const total = clientes.length;
+      const ativos = clientes.filter(c => parseInt(c.sensores_ativos) > 0).length;
+      const inativos = total - ativos;
+      const totalSensores = clientes.reduce((a, c) => a + parseInt(c.total_sensores || 0), 0);
+
+      document.getElementById('statTotal').textContent = total;
+      document.getElementById('statAtivos').textContent = ativos;
+      document.getElementById('statInativos').textContent = inativos;
+      document.getElementById('statSensores').textContent = totalSensores;
+
+      const tbody = document.getElementById('clientesTableBody');
+      if (!clientes.length) { tbody.innerHTML = '<tr><td colspan="8" class="no-data">Nenhum cliente cadastrado.</td></tr>'; return; }
+
+      tbody.innerHTML = clientes.map(c => {
+        const ativo = parseInt(c.sensores_ativos) > 0;
+        const data = new Date(c.criado_em).toLocaleDateString('pt-BR');
+        return `<tr>
+          <td style="color:rgba(255,255,255,.3)">#${c.id}</td>
+          <td><strong>${c.nome}</strong></td>
+          <td style="color:rgba(255,255,255,.5);font-size:.8rem">${c.email}</td>
+          <td><span class="status-chip chip-amb">${c.ambiente || 'Padrão'}</span></td>
+          <td style="color:rgba(255,255,255,.5)">${c.total_sensores || 0}</td>
+          <td><span class="status-chip ${ativo ? 'chip-ativo' : 'chip-inativo'}">${ativo ? '● Ativo' : '● Inativo'}</span></td>
+          <td style="color:rgba(255,255,255,.35);font-size:.8rem">${data}</td>
+          <td>
+            <button class="btn-toggle ${ativo ? 'btn-desativar' : 'btn-ativar'}" onclick="toggleCliente(${c.id}, ${ativo}, this)">
+              ${ativo ? 'Desativar' : 'Ativar'}
+            </button>
+          </td>
+        </tr>`;
+      }).join('');
+    } catch(e) {
+      document.getElementById('clientesTableBody').innerHTML = '<tr><td colspan="8" class="no-data">Erro ao carregar clientes.</td></tr>';
+    }
+  }
+
+  async function toggleCliente(clienteId, estaAtivo, btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-sm"></span>';
+    try {
+      const res = await fetch(`${API}/api/admin/cliente/${clienteId}/status`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminSenha: ADMIN_SENHA, ativo: !estaAtivo })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast(estaAtivo ? 'Cliente desativado com sucesso' : 'Cliente reativado com sucesso', 'ok');
+        await carregarClientes();
+      } else {
+        showToast(data.erro || 'Erro ao atualizar status', 'err');
+        btn.disabled = false;
+        btn.innerHTML = estaAtivo ? 'Desativar' : 'Ativar';
+      }
+    } catch(e) {
+      showToast('Erro de conexão', 'err');
+      btn.disabled = false;
+      btn.innerHTML = estaAtivo ? 'Desativar' : 'Ativar';
+    }
+  }
+
+  function toggleCustomLimites() {
+    const val = document.getElementById('cAmbiente').value;
+    document.getElementById('customLimites').style.display = val === '0' ? 'block' : 'none';
+  }
+
+  function gerarCamposSensores() {
+    const qtd = parseInt(document.getElementById('cQtd').value) || 1;
+    const container = document.getElementById('sensoresContainer');
+    container.innerHTML = '';
+    for (let i = 1; i <= qtd; i++) {
+      const row = document.createElement('div');
+      row.className = 'sensor-row';
+      row.innerHTML = `
+        <div class="sensor-row-title">Sensor ${i}</div>
+        <div class="form-group"><label class="form-label">Nome</label><input type="text" class="form-input" id="sNome${i}" placeholder="Ex: Sensor Sala ${i}"></div>
+        <div class="form-group"><label class="form-label">Local</label><input type="text" class="form-input" id="sLocal${i}" placeholder="Ex: Corredor ${i}"></div>`;
+      container.appendChild(row);
+    }
+  }
+
+  async function cadastrarCliente() {
+    const nome = document.getElementById('cNome').value.trim();
+    const email = document.getElementById('cEmail').value.trim();
+    const senha = document.getElementById('cSenha').value.trim();
+    const ambienteId = parseInt(document.getElementById('cAmbiente').value);
+    const qtd = parseInt(document.getElementById('cQtd').value) || 1;
+    const btn = document.getElementById('btnSalvar');
+
+    document.getElementById('cadastroErro').style.display = 'none';
+    document.getElementById('cadastroSucesso').style.display = 'none';
+    document.getElementById('tokenResultado').style.display = 'none';
+
+    if (!nome || !email || !senha) { mostrarErroCadastro('Preencha nome, e-mail e senha.'); return; }
+    if (senha.length < 6) { mostrarErroCadastro('A senha deve ter pelo menos 6 caracteres.'); return; }
+
+    let limiteVerde = null, limiteAmarelo = null, limiteVermelho = null;
+    if (ambienteId === 0) {
+      limiteVerde = parseFloat(document.getElementById('cLimVerde').value);
+      limiteAmarelo = parseFloat(document.getElementById('cLimAmarelo').value);
+      limiteVermelho = parseFloat(document.getElementById('cLimVermelho').value);
+      if (!limiteVerde || !limiteAmarelo || !limiteVermelho) { mostrarErroCadastro('Preencha todos os limites de ruído.'); return; }
+      if (!(limiteVerde < limiteAmarelo && limiteAmarelo <= limiteVermelho)) { mostrarErroCadastro('Os limites devem ser: Verde < Amarelo ≤ Vermelho.'); return; }
+    }
+
+    const sensores = [];
+    for (let i = 1; i <= qtd; i++) {
+      const sNome = document.getElementById(`sNome${i}`)?.value.trim();
+      const sLocal = document.getElementById(`sLocal${i}`)?.value.trim();
+      if (!sNome || !sLocal) { mostrarErroCadastro(`Preencha os dados do Sensor ${i}.`); return; }
+      sensores.push({ nome: sNome, local: sLocal });
+    }
+
+    btn.disabled = true; btn.innerHTML = '<span class="spinner-sm"></span> Cadastrando...';
+
+    try {
+      const res = await fetch(`${API}/api/admin/cadastrar`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nome, email, senha, sensores, adminSenha: ADMIN_SENHA, ambienteId: ambienteId || 3, limiteVerde, limiteAmarelo, limiteVermelho })
+      });
+      const data = await res.json();
+      if (!res.ok) { mostrarErroCadastro(data.erro || 'Erro ao cadastrar.'); btn.disabled = false; btn.innerHTML = 'Cadastrar cliente'; return; }
+
+      document.getElementById('cadastroSucesso').textContent = `✓ Cliente "${nome}" cadastrado com sucesso!`;
+      document.getElementById('cadastroSucesso').style.display = 'block';
+
+      const trEl = document.getElementById('tokenResultado');
+      trEl.innerHTML = `<h4>🔑 Tokens dos sensores — guarde agora!</h4>` +
+        data.tokens.map((t, i) => `<div class="token-item">Sensor ${i+1} — ${t.nome}: <strong>${t.token}</strong></div>`).join('');
+      trEl.style.display = 'block';
+
+      limparCadastro(false);
+      showToast('Cliente cadastrado!', 'ok');
+    } catch(e) {
+      mostrarErroCadastro('Não foi possível conectar ao servidor.');
+    }
+    btn.disabled = false; btn.innerHTML = 'Cadastrar cliente';
+  }
+
+  function limparCadastro(limparMsgs = true) {
+    ['cNome','cEmail','cSenha'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('cAmbiente').value = '3';
+    document.getElementById('customLimites').style.display = 'none';
+    document.getElementById('cQtd').value = '1';
+    gerarCamposSensores();
+    if (limparMsgs) {
+      document.getElementById('cadastroErro').style.display = 'none';
+      document.getElementById('cadastroSucesso').style.display = 'none';
+      document.getElementById('tokenResultado').style.display = 'none';
+    }
+  }
+
+  function mostrarErroCadastro(msg) {
+    const el = document.getElementById('cadastroErro');
+    el.textContent = msg; el.style.display = 'block';
+  }
+
+  function showToast(msg, tipo) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.className = `toast ${tipo} show`;
+    setTimeout(() => t.className = 'toast', 3000);
+  }
+
+  function sair() {
+    sessionStorage.removeItem('echon_admin');
+    window.location.replace('index.html');
+  }
+
+  gerarCamposSensores();
+</script>
+</body>
+</html>

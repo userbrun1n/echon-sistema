@@ -636,7 +636,10 @@
       renderizarMetrics(data.stats, alertasHoje, medicoesHoje.length > 0);
       renderizarHistoricoGrafico(medicoesHoje);
       renderizarAlertas(alertasHoje);
-    } catch (e) { renderizarSimulado(); }
+    } catch (e) {
+      console.error('Erro ao buscar dados:', e);
+      mostrarErroConexao();
+    }
   }
 
   function renderizarDispositivos(lista) {
@@ -879,32 +882,26 @@
     }
   }
 
-  function renderizarSimulado() {
-    document.getElementById('mAtual').textContent = '58';
-    document.getElementById('mMedia').textContent = '46';
-    document.getElementById('mPico').textContent = '82';
-    document.getElementById('mAlertas').textContent = '3';
-    document.getElementById('mStatus').textContent = '● Moderado';
-    document.getElementById('mStatus').className = 'metric-badge badge-moderate';
-    const labels = ['06h','07h','08h','09h','10h','11h','12h','13h','14h','15h','16h','17h'];
-    const valores = [38,42,55,58,61,54,48,62,78,82,65,58];
-    if (!mainChart) {
-      mainChart = new Chart(document.getElementById('mainChart'), {
-        type:'line',
-        data:{labels, datasets:[
-          {label:'dB(A)', data:valores, borderColor:'#3B8EF3', backgroundColor:'rgba(59,142,243,.1)', borderWidth:2, fill:true, tension:.4, pointRadius:3},
-          {label:'Limite', data:Array(12).fill(65), borderColor:'rgba(239,68,68,.5)', borderWidth:1.5, borderDash:[5,4], pointRadius:0, fill:false}
-        ]},
-        options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{ticks:{color:'rgba(255,255,255,.3)',font:{size:10}},grid:{color:'rgba(255,255,255,.04)'}}, y:{min:25,max:95,ticks:{color:'rgba(255,255,255,.3)',font:{size:10},callback:v=>v+' dB'},grid:{color:'rgba(255,255,255,.05)'}}}}
-      });
+  function mostrarErroConexao() {
+    // Zera os cards
+    document.getElementById('mAtual').textContent = '--';
+    document.getElementById('mMedia').textContent = '--';
+    document.getElementById('mPico').textContent = '--';
+    document.getElementById('mAlertas').textContent = '--';
+    document.getElementById('mStatus').textContent = 'Sem conexão';
+    document.getElementById('mStatus').className = 'metric-badge badge-info';
+
+    // Mostra mensagem no gráfico
+    const chartEl = document.getElementById('mainChart');
+    const noDataEl = document.getElementById('chartNoData');
+    if (chartEl) chartEl.style.display = 'none';
+    if (noDataEl) {
+      noDataEl.style.display = 'flex';
+      noDataEl.innerHTML = '<span style="font-size:1.5rem">📡</span><span>Aguardando conexão com o servidor</span><span style="font-size:.75rem">Tentando reconectar automaticamente...</span>';
     }
-    document.getElementById('alertsList').innerHTML = '<div class="alert-item a-red"><span class="alert-icon">⚠</span><div><div class="alert-text">Pico de 82 dB – Sala A</div><div class="alert-meta">Hoje, 14:32</div></div></div><div class="alert-item a-yellow"><span class="alert-icon">◉</span><div><div class="alert-text">Ruído elevado por 12 min</div><div class="alert-meta">Hoje, 11:15</div></div></div><div class="alert-item a-green"><span class="alert-icon">✓</span><div><div class="alert-text">Ambiente normalizado</div><div class="alert-meta">Hoje, 08:10</div></div></div>';
-    document.getElementById('deviceBtns').innerHTML = '<button class="device-btn active">Sensor Principal – Ambiente</button>';
-    if (!dadosGlobais) {
-      const agora = new Date(); const medicoes = [];
-      for (let dia=0; dia<5; dia++) { for (let i=0; i<12; i++) { const d=new Date(agora); d.setDate(d.getDate()-dia); d.setHours(6+i,Math.floor(Math.random()*60),0,0); medicoes.push({db_valor:(35+Math.random()*50).toFixed(1), registrado_em:d.toISOString(), dispositivo_nome:'Sensor Principal', dispositivo_local:'Ambiente'}); } }
-      dadosGlobais = {medicoes, alertas:[], dispositivos:[{nome:'Sensor Principal',local:'Ambiente',ativo:true}], stats:{atual:58,media:46,pico:82}};
-    }
+
+    // Mensagem nos alertas
+    document.getElementById('alertsList').innerHTML = '<div class="no-data">Sem conexão com o servidor</div>';
   }
 
   async function carregarAdmin() {

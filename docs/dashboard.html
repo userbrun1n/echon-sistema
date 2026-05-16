@@ -792,9 +792,17 @@
 
   function exportarCSV() {
     let medicoes, nome;
-    if (medicaoAtiva) { medicoes = medicaoAtiva.medicoes; nome = `echon-medicao-${medicaoAtiva.data.replace(/\//g,'-')}.csv`; }
-    else if (dadosGlobais && dadosGlobais.medicoes && dadosGlobais.medicoes.length) { medicoes = dadosGlobais.medicoes; nome = 'echon-todas-medicoes.csv'; }
-    else { alert('Nenhum dado disponível.\nAbra uma medição no Histórico para exportar um dia específico.'); return; }
+
+    // Sempre exporta só o dia da medição aberta no histórico
+    if (medicaoAtiva) {
+      medicoes = medicaoAtiva.medicoes;
+      nome = `echon-medicao-${medicaoAtiva.data.replace(/\//g,'-')}.csv`;
+    } else {
+      // Se não tem medição aberta, pede para abrir uma no histórico
+      alert('Abra uma medição no Histórico para exportar os dados do dia específico.');
+      showPage('historico');
+      return;
+    }
 
     const dias = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
 
@@ -814,20 +822,25 @@
     }
 
     const ambiente = limiteAtual.ambiente || '--';
-    const linhas = ['Data,Dia da Semana,Hora,Minuto,Faixa Horaria,dB(A),Nivel,Dispositivo,Local,Ambiente'];
+
+    // Separador ponto-e-vírgula para o Excel abrir em colunas separadas
+    const SEP = ';';
+    const cabecalho = ['Data','Dia da Semana','Hora','Minuto','Faixa Horaria','dB(A)','Nivel','Dispositivo','Local','Ambiente'].join(SEP);
+    const linhas = [cabecalho];
 
     medicoes.forEach(m => {
-      const d = new Date(m.registrado_em);
+      const d         = new Date(m.registrado_em);
       const data      = d.toLocaleDateString('pt-BR', {timeZone:'America/Sao_Paulo'});
       const diaSemana = dias[d.getDay()];
-      const hora      = d.toLocaleString('pt-BR', {hour:'2-digit', timeZone:'America/Sao_Paulo'}).replace('h','').trim();
-      const minuto    = d.toLocaleString('pt-BR', {minute:'2-digit', timeZone:'America/Sao_Paulo'}).trim();
-      const faixa     = getFaixaHoraria(parseInt(hora));
-      const db        = parseFloat(m.db_valor).toFixed(2);
-      const nivel     = getNivel(parseFloat(db));
-      const disp      = (m.dispositivo_nome || '--').replace(/,/g, ';');
-      const local     = (m.dispositivo_local || '--').replace(/,/g, ';');
-      linhas.push(`${data},${diaSemana},${hora},${minuto},${faixa},${db},${nivel},${disp},${local},${ambiente}`);
+      const horaNum   = parseInt(d.toLocaleString('pt-BR', {hour:'2-digit', timeZone:'America/Sao_Paulo'}).replace('h','').trim());
+      const hora      = String(horaNum).padStart(2,'0');
+      const minuto    = d.toLocaleString('pt-BR', {minute:'2-digit', timeZone:'America/Sao_Paulo'}).trim().padStart(2,'0');
+      const faixa     = getFaixaHoraria(horaNum);
+      const db        = parseFloat(m.db_valor).toFixed(2).replace('.',',');
+      const nivel     = getNivel(parseFloat(m.db_valor));
+      const disp      = (m.dispositivo_nome || '--').replace(/;/g, ' ');
+      const local     = (m.dispositivo_local || '--').replace(/;/g, ' ');
+      linhas.push([data, diaSemana, hora, minuto, faixa, db, nivel, disp, local, ambiente].join(SEP));
     });
 
     const blob = new Blob(['﻿' + linhas.join('\n')], {type:'text/csv;charset=utf-8;'});
